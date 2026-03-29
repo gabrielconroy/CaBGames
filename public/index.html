@@ -135,6 +135,7 @@
 
         div.innerHTML = `
           <b>${escapeHtml(p.name)}</b>
+<div class="muted">by ${escapeHtml(p.author || "Anonymous")}</div>
           <div>⭐ ${rating.toFixed(2)} (${votes} vote${votes === 1 ? "" : "s"})</div>
           <button onclick="play(${p.id})">Play</button>
           <button onclick="rate(${p.id},5)">Rate 5</button>
