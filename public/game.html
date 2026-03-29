@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fru(two) 45x45 Puzzle</title>
+  <link rel="stylesheet" href="style.css" />
+  
+</head>
+<body>
+  <canvas id="fireworks" style="position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:1000;"></canvas>
+  <div id="starfield"></div>
+  <div id="crt-overlay"></div>
+
+  <header>
+    <div class="game-stats">
+  <span id="howto"></span>
+  <span>Score: <span id="score">0</span></span>
+  <span>Mistakes: <span id="mistakes">0</span></span>
+  <span>Selected: <span id="selected">-</span></span>
+  <button id="deselect" type="button" onclick="deselect()" disabled>Deselect</button>
+  <button id="reset-btn" type="button" onclick="confirmReset()">Reset</button>
+  <button type="button" onclick="sortMerged()">Sort Merged</button>
+  <button type="button" onclick="goHome()">Home</button>
+  </div>
+  </header>
+
+  <main id="board"></main>
+
+  <div id="win-banner">
+    <span>Y</span><span>O</span><span>U</span><span>&nbsp;</span>
+    <span>W</span><span>I</span><span>N</span><span>!</span>
+  </div>
+
+  
+  
+  
+
+<div id="tile-tooltip"></div>
+<canvas id="dotdance"></canvas>
+<button id="return-to-board">Return to Puzzle</button>
+
+<script src="./game.js"></script>
+</body>
+</html>

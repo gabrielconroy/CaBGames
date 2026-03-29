@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Puzzle Hub</title>
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 24px;
+      line-height: 1.4;
+    }
+
+    textarea {
+      width: 100%;
+      max-width: 100%;
+      min-height: 280px;
+      font-family: Consolas, Monaco, monospace;
+      font-size: 13px;
+    }
+
+    input {
+      width: 100%;
+      max-width: 420px;
+      padding: 8px;
+      font-size: 14px;
+    }
+
+    button {
+      margin-top: 10px;
+      margin-right: 8px;
+      padding: 8px 12px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    #status {
+      margin-top: 12px;
+      min-height: 22px;
+      font-weight: bold;
+    }
+
+    .ok {
+      color: #166534;
+    }
+
+    .err {
+      color: #b91c1c;
+    }
+
+    .muted {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .puzzle {
+      border: 1px solid #ddd;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 8px;
+    }
+
+    .empty {
+      color: #666;
+      font-style: italic;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🧩 Puzzle Hub</h1>
+
+  <h2>Upload Puzzle</h2>
+
+<input id="name" placeholder="Puzzle name"><br><br>
+
+<!-- FILE UPLOAD -->
+<input type="file" id="fileInput" accept=".js,.json"><br><br>
+
+<!-- TEXT OPTION -->
+<textarea id="json" rows="10" cols="50" placeholder="Paste cats JSON OR JS"></textarea><br><br>
+
+<button onclick="upload()">Upload</button>
+
+<p id="status"></p>
+
+  <h2>Browse</h2>
+  <div id="list"></div>
+
+  <script>
+    function setStatus(text, kind = "") {
+      const el = document.getElementById("status");
+      el.textContent = text || "";
+      el.className = kind;
+    }
+
+    function clearForm() {
+      document.getElementById("name").value = "";
+      document.getElementById("json").value = "";
+      setStatus("");
+    }
+	
+	document.getElementById("fileInput").addEventListener("change", async function (e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const text = await file.text();
+
+  try {
+    // Handle "var cats = {...};" format
+    let cleaned = text.trim();
+
+    if (cleaned.startsWith("var cats")) {
+      cleaned = cleaned
+        .replace(/^var\s+cats\s*=\s*/, "")
+        .replace(/;?\s*$/, "");
+    }
+
+    const parsed = JSON.parse(cleaned);
+
+    // Put into textarea so existing upload() works
+    document.getElementById("json").value = JSON.stringify(parsed, null, 2);
+
+  } catch (err) {
+    alert("Invalid file format. Must contain valid cats JSON.");
+    console.error(err);
+  }
+});
+
+    function parseCatsInput(raw) {
+      let cleaned = raw.trim();
+
+      // Accept:
+      // var cats = { ... };
+      // let cats = { ... };
+      // const cats = { ... };
+      cleaned = cleaned.replace(/^(var|let|const)\s+cats\s*=\s*/i, "").trim();
+
+      // Remove trailing semicolon if present
+      cleaned = cleaned.replace(/;\s*$/, "").trim();
+
+      // First try strict JSON
+      try {
+        return JSON.parse(cleaned);
+      } catch (jsonErr) {
+        // Then fall back to JS object literal parsing
+        try {
+          return Function('"use strict"; return (' + cleaned + ');')();
+        } catch (jsErr) {
+          throw new Error("Could not parse puzzle data.");
+        }
+      }
+    }
+
+    function basicValidatePuzzleData(data) {
+      if (!data || typeof data !== "object" || Array.isArray(data)) {
+        return "Puzzle data must be an object.";
+      }
+
+      const categories = Object.keys(data);
+
+      if (categories.length === 0) {
+        return "Puzzle must contain at least one category.";
+      }
+
+      const expectedCount = categories.length;
+      const seen = new Set();
+
+      for (const [catName, items] of Object.entries(data)) {
+        if (!Array.isArray(items)) {
+          return `Category "${catName}" must contain an array.`;
+        }
+
+        if (items.length !== expectedCount) {
+          return `Category "${catName}" has ${items.length} items; expected ${expectedCount}.`;
+        }
+
+        for (const item of items) {
+          if (typeof item !== "string" || !item.trim()) {
+            return `Category "${catName}" contains an invalid item.`;
+          }
+
+          const key = item.trim();
+          if (seen.has(key)) {
+            return `Duplicate item found: "${key}".`;
+          }
+          seen.add(key);
+        }
+      }
+
+      return null;
+    }
+
+    function formatInput() {
+      const raw = document.getElementById("json").value;
+
+      try {
+        const data = parseCatsInput(raw);
+        document.getElementById("json").value =
+          "var cats = " + JSON.stringify(data, null, 2) + ";";
+        setStatus("Formatted successfully.", "ok");
+      } catch (err) {
+        setStatus("Could not format: invalid input.", "err");
+      }
+    }
+
+
+function parseCats(text) {
+  // 🔧 REMOVE BOM + trim
+  text = text.replace(/^\uFEFF/, "").trim();
+
+  try {
+    return JSON.parse(text);
+  } catch {}
+
+  try {
+    const match = text.match(/var\s+cats\s*=\s*(\{[\s\S]*\});?/);
+    if (match) {
+      return JSON.parse(match[1]);
+    }
+  } catch {}
+
+  throw new Error("Invalid format. Use JSON or 'var cats = {...}'");
+}
+
+async function upload() {
+  const name = document.getElementById("name").value;
+  const fileInput = document.getElementById("fileInput");
+  const textarea = document.getElementById("json");
+  const status = document.getElementById("status");
+
+  let text = "";
+
+  try {
+    // PRIORITY: file upload
+    if (fileInput.files.length > 0) {
+      text = await fileInput.files[0].text();
+    } else if (textarea.value.trim()) {
+      text = textarea.value;
+    } else {
+      status.innerText = "❌ Provide a file or paste data";
+      return;
+    }
+
+    const data = parseCats(text);
+
+    const res = await fetch("/api/upload", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ name, data })
+});
+
+    if (!res.ok) {
+      throw new Error(await res.text());
+    }
+
+    status.innerText = "✅ Upload successful!";
+    textarea.value = "";
+    fileInput.value = "";
+
+    load();
+
+  } catch (err) {
+    status.innerText = "❌ " + err.message;
+  }
+}
+
+    async function load() {
+      const res = await fetch("/api/puzzles");
+      const puzzles = await res.json();
+
+      const list = document.getElementById("list");
+      list.innerHTML = "";
+
+      if (!puzzles.length) {
+        list.innerHTML = `<div class="empty">No puzzles uploaded yet.</div>`;
+        return;
+      }
+
+      puzzles.forEach(p => {
+        const div = document.createElement("div");
+        div.className = "puzzle";
+
+        const rating = Number(p.rating || 0);
+        const votes = Number(p.votes || 0);
+
+        div.innerHTML = `
+          <b>${escapeHtml(p.name)}</b>
+          <div>⭐ ${rating.toFixed(2)} (${votes} vote${votes === 1 ? "" : "s"})</div>
+          <button onclick="play(${p.id})">Play</button>
+          <button onclick="rate(${p.id},5)">Rate 5</button>
+          <button onclick="rate(${p.id},4)">Rate 4</button>
+          <button onclick="rate(${p.id},3)">Rate 3</button>
+          <button onclick="rate(${p.id},2)">Rate 2</button>
+          <button onclick="rate(${p.id},1)">Rate 1</button>
+        `;
+
+        list.appendChild(div);
+      });
+    }
+
+      async function play(id) {
+  console.log("Navigating to puzzle:", id);
+
+  window.location.href = "/game?id=" + encodeURIComponent(id);
+}
+
+    async function rate(id, value) {
+      await fetch("/api/rate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, rating: value })
+      });
+
+      load();
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    load();
+  </script>
+
+</body>
+</html>
