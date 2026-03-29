@@ -688,20 +688,23 @@ function playVictoryJingle(){
 
 
 function returnToBoard(){
-
   const canvas = document.getElementById("dotdance");
   const board  = document.getElementById("board");
   const button = document.getElementById("return-to-board");
+  const fade   = document.getElementById("win-fade");
 
   canvas.style.display = "none";
+  fade.style.opacity = "0";
   board.style.visibility = "visible";
+  button.style.opacity = "0";
   button.style.display = "none";
-
 }
 
 function startDotDance(){
-	console.log("Tiles found:", document.querySelectorAll(".bigbut").length, "Disabled:", document.querySelectorAll(".bigbut:disabled").length);
-  document.getElementById("return-to-board").style.display = "block";
+  console.log("Tiles found:", document.querySelectorAll(".bigbut").length, "Disabled:", document.querySelectorAll(".bigbut:disabled").length);
+
+  // Hide tooltip by removing any hovered tile focus
+  document.activeElement?.blur();
 
   const canvas = document.getElementById("dotdance");
   const ctx = canvas.getContext("2d");
@@ -709,7 +712,7 @@ function startDotDance(){
   canvas.height = window.innerHeight;
   const centerX = canvas.width / 2;
   const centerY = canvas.height / 2;
-  
+
   const N = Object.keys(cats).length;
   const lissRadius = Math.min(canvas.width, canvas.height) * 0.35;
   const dots = [];
@@ -717,14 +720,24 @@ function startDotDance(){
   let tiles = document.querySelectorAll(".bigbut:disabled");
   if(tiles.length === 0) tiles = document.querySelectorAll(".bigbut");
 
-  // Dissolve into M*M dots
+  // Capture tile colors — brighten for dark background
   tiles.forEach(tile => {
     const rect = tile.getBoundingClientRect();
     let color = getComputedStyle(tile).backgroundColor;
-    if(!color || color === "rgba(0, 0, 0, 0)" || color === "transparent") color = "#444";
+    if(!color || color === "rgba(0, 0, 0, 0)" || color === "transparent") color = "#888";
+
+    // Parse and brighten the color
+    const tmp = document.createElement("canvas");
+    tmp.width = tmp.height = 1;
+    const tctx = tmp.getContext("2d");
+    tctx.fillStyle = color;
+    tctx.fillRect(0, 0, 1, 1);
+    const [r, g, b] = tctx.getImageData(0, 0, 1, 1).data;
+    const brighten = (v) => Math.min(255, Math.round(v * 1.4 + 30));
+    const brightColor = `rgb(${brighten(r)}, ${brighten(g)}, ${brighten(b)})`;
+
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
-
     for(let j = 0; j < N; j++){
       dots.push({
         x: cx + (Math.random() - 0.5) * rect.width,
@@ -733,10 +746,22 @@ function startDotDance(){
         originY: cy,
         vx: (Math.random() - 0.5) * 6,
         vy: (Math.random() - 0.5) * 6,
-        color: color
+        color: brightColor
       });
     }
-});
+  });
+
+  // Fade background to near-black
+  const fade = document.getElementById("win-fade");
+  fade.style.opacity = "0.92";
+
+  // Hide board, show return button with fade-in
+  document.getElementById("board").style.visibility = "hidden";
+  const btn = document.getElementById("return-to-board");
+  btn.style.display = "block";
+  setTimeout(() => btn.style.opacity = "1", 50);
+
+  // rest of function unchanged from let stage = 0 onwards...
 
   document.getElementById("board").style.visibility = "hidden";
 
