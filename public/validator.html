@@ -562,7 +562,6 @@ async function uploadPuzzle(){
 
   const author = document.getElementById("author").value || "Anonymous";
 
-  // Convert to clean format
   const cleanCats = {};
   for(const key in parsedCats){
     cleanCats[key] = parsedCats[key].items;
@@ -571,29 +570,26 @@ async function uploadPuzzle(){
   try {
 
     const res = await fetch("/api/upload", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        data: cleanCats,
-        author: author
-      })
-    });
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    data: cleanCats,
+    author: author
+  })
+});
 
-    const result = await res.json();
+const text = await res.text(); // 👈 not .json()
 
-    if(res.ok){
-      alert("✅ Puzzle uploaded successfully!");
-      window.location.href = "/";
-    } else {
-      alert("❌ Upload failed: " + (result.error || "Unknown error"));
-    }
+console.log("UPLOAD RESPONSE:", text);
 
-  } catch(err){
-    console.error(err);
-    alert("❌ Upload failed");
-  }
+if(res.ok){
+  alert("✅ Puzzle uploaded successfully!");
+  window.location.href = "/";
+} else {
+  alert("❌ Upload failed:\n" + text);
+}
 }
 
 </script>
