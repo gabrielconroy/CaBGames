@@ -3,6 +3,11 @@ var cats;
 async function loadPuzzle() {
   const params = new URLSearchParams(window.location.search);
   const id = params.get("id");
+  const lastId = localStorage.getItem('puzzleId');
+if (lastId !== id) {
+  localStorage.clear();
+  localStorage.setItem('puzzleId', id);
+}
 
   if (!id) {
     document.getElementById("board").innerHTML = "<h2>No puzzle found</h2>";
