@@ -741,8 +741,7 @@ function startDotDance(){
   document.getElementById("board").style.visibility = "hidden";
 
   
-  const lissRadius = Math.min(canvas.width, canvas.height) * 0.35;
-
+  
   let stage = 0;
   let time = 0;
 
