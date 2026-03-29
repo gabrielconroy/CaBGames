@@ -709,12 +709,15 @@ function startDotDance(){
   canvas.height = window.innerHeight;
   const centerX = canvas.width / 2;
   const centerY = canvas.height / 2;
+  
+  const N = Object.keys(cats).length;
+  const lissRadius = Math.min(canvas.width, canvas.height) * 0.35;
   const dots = [];
 
   let tiles = document.querySelectorAll(".bigbut:disabled");
   if(tiles.length === 0) tiles = document.querySelectorAll(".bigbut");
 
-  // Capture positions BEFORE hiding board
+  // Dissolve into M*M dots
   tiles.forEach(tile => {
     const rect = tile.getBoundingClientRect();
     let color = getComputedStyle(tile).backgroundColor;
@@ -737,7 +740,7 @@ function startDotDance(){
 
   document.getElementById("board").style.visibility = "hidden";
 
-  const N = Math.round(Math.sqrt(dots.length)); // number of categories
+  
   const lissRadius = Math.min(canvas.width, canvas.height) * 0.35;
 
   let stage = 0;
