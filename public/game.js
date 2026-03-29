@@ -700,119 +700,104 @@ function returnToBoard(){
 }
 
 function startDotDance(){
-
-document.getElementById("return-to-board").style.display = "block";
-
-document.getElementById("board").style.visibility = "hidden";
+  document.getElementById("return-to-board").style.display = "block";
 
   const canvas = document.getElementById("dotdance");
   const ctx = canvas.getContext("2d");
-
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
-
-  const centerX = canvas.width/2;
-  const centerY = canvas.height/2;
-
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height / 2;
   const dots = [];
 
   let tiles = document.querySelectorAll(".bigbut:disabled");
+  if(tiles.length === 0) tiles = document.querySelectorAll(".bigbut");
 
-if(tiles.length === 0){
-  tiles = document.querySelectorAll(".bigbut");
-}
-
-  tiles.forEach(tile=>{
-
+  // Capture tile positions BEFORE hiding the board
+  tiles.forEach(tile => {
     const rect = tile.getBoundingClientRect();
     let color = getComputedStyle(tile).backgroundColor;
-
-if(!color || color === "rgba(0, 0, 0, 0)" || color === "transparent"){
-  color = "#444";
-}
-
-    const startX = rect.left + rect.width/2;
-    const startY = rect.top + rect.height/2;
+    if(!color || color === "rgba(0, 0, 0, 0)" || color === "transparent") color = "#444";
 
     const stepX = rect.width / 5;
-const stepY = rect.height / 5;
-
-for(let gy = 0; gy < 5; gy++){
-  for(let gx = 0; gx < 5; gx++){
-
-    const px = rect.left + gx*stepX + stepX/2;
-    const py = rect.top  + gy*stepY + stepY/2;
-
-    dots.push({
-      x:px,
-      y:py,
-      vx:(Math.random()-0.5)*3,
-      vy:(Math.random()-0.5)*3,
-      color:color
-    });
-
-  }
-}
-
+    const stepY = rect.height / 5;
+    for(let gy = 0; gy < 5; gy++){
+      for(let gx = 0; gx < 5; gx++){
+        const px = rect.left + gx * stepX + stepX / 2;
+        const py = rect.top  + gy * stepY + stepY / 2;
+        dots.push({
+          x: px,
+          y: py,
+          originX: px,      // remember start for stage 0 reset
+          originY: py,
+          vx: (Math.random() - 0.5) * 6,
+          vy: (Math.random() - 0.5) * 6,
+          color: color
+        });
+      }
+    }
   });
+
+  // Hide board AFTER capturing positions
+  document.getElementById("board").style.visibility = "hidden";
 
   let stage = 0;
   let time = 0;
 
+  // Cycle stages endlessly
+  function advanceStage(){
+    stage = (stage + 1) % 3;
+
+    // On returning to stage 0, reset positions to origin and re-scatter
+    if(stage === 0){
+      dots.forEach(d => {
+        d.x = d.originX;
+        d.y = d.originY;
+        d.vx = (Math.random() - 0.5) * 6;
+        d.vy = (Math.random() - 0.5) * 6;
+      });
+    }
+
+    setTimeout(advanceStage, 2000);
+  }
+  setTimeout(advanceStage, 2000);
+
   function animate(){
-
     requestAnimationFrame(animate);
-
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     time += 0.02;
 
-    dots.forEach((d,i)=>{
-
+    dots.forEach((d, i) => {
       if(stage === 0){
-
+        // Scatter with soft bounce off edges
         d.x += d.vx;
         d.y += d.vy;
-
+        if(d.x < 0 || d.x > canvas.width)  d.vx *= -1;
+        if(d.y < 0 || d.y > canvas.height) d.vy *= -1;
       }
-
       else if(stage === 1){
-
         const gx = (i % 25) - 12;
-        const gy = Math.floor(i/25) - 12;
-
-        const targetX = centerX + gx*20;
-        const targetY = centerY + gy*20;
-
-        d.x += (targetX - d.x)*0.06;
-        d.y += (targetY - d.y)*0.06;
-
+        const gy = Math.floor(i / 25) - 12;
+        const targetX = centerX + gx * 20;
+        const targetY = centerY + gy * 20;
+        d.x += (targetX - d.x) * 0.06;
+        d.y += (targetY - d.y) * 0.06;
       }
-
       else if(stage === 2){
-
-        const angle = i * 0.15 + time*0.7;
-        const radius = 120 + i*0.25;
-
-        const targetX = centerX + Math.cos(angle)*radius;
-        const targetY = centerY + Math.sin(angle)*radius;
-
-        d.x += (targetX - d.x)*0.05;
-        d.y += (targetY - d.y)*0.05;
-
+        const angle = i * 0.15 + time * 0.7;
+        const radius = 120 + i * 0.25;
+        const targetX = centerX + Math.cos(angle) * radius;
+        const targetY = centerY + Math.sin(angle) * radius;
+        d.x += (targetX - d.x) * 0.05;
+        d.y += (targetY - d.y) * 0.05;
       }
 
       ctx.beginPath();
-      ctx.arc(d.x,d.y,3,0,Math.PI*2);
+      ctx.arc(d.x, d.y, 3, 0, Math.PI * 2);
       ctx.fillStyle = d.color;
       ctx.fill();
-
     });
-
   }
 
   animate();
-
-  setTimeout(()=>stage=1,1200);   // dissolve → grid
-  setTimeout(()=>stage=2,3200);   // grid → spiral
 }
