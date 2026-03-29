@@ -721,16 +721,19 @@ function startDotDance(){
     if(!color || color === "rgba(0, 0, 0, 0)" || color === "transparent") color = "#444";
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
-    dots.push({
-      x: cx,
-      y: cy,
-      originX: cx,
-      originY: cy,
-      vx: (Math.random() - 0.5) * 6,
-      vy: (Math.random() - 0.5) * 6,
-      color: color
-    });
-  });
+
+    for(let j = 0; j < N; j++){
+      dots.push({
+        x: cx + (Math.random() - 0.5) * rect.width,
+        y: cy + (Math.random() - 0.5) * rect.height,
+        originX: cx,
+        originY: cy,
+        vx: (Math.random() - 0.5) * 6,
+        vy: (Math.random() - 0.5) * 6,
+        color: color
+      });
+    }
+});
 
   document.getElementById("board").style.visibility = "hidden";
 
