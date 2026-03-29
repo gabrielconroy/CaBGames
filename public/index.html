@@ -5,87 +5,166 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Puzzle Hub</title>
   <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
     body {
       font-family: Arial, Helvetica, sans-serif;
-      max-width: 1000px;
+      max-width: 1100px;
       margin: 0 auto;
       padding: 24px;
+      background: #f4f6f9;
+      color: #1a1a2e;
       line-height: 1.4;
     }
 
-    textarea {
-      width: 100%;
-      max-width: 100%;
-      min-height: 280px;
-      font-family: Consolas, Monaco, monospace;
-      font-size: 13px;
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 4px;
     }
 
-    input {
-      width: 100%;
-      max-width: 420px;
-      padding: 8px;
-      font-size: 14px;
+    h2 {
+      font-size: 1.2rem;
+      color: #444;
+      margin: 28px 0 12px;
     }
 
-    button {
-      margin-top: 10px;
-      margin-right: 8px;
-      padding: 8px 12px;
-      font-size: 14px;
-      cursor: pointer;
+    .upload-cta {
+      margin: 20px 0 30px 0;
+      text-align: center;
     }
-	
-	.upload-cta {
-  margin: 20px 0 30px 0;
-  text-align: center;
-}
 
-.upload-button {
-  display: inline-block;
-  padding: 18px 32px;
-  font-size: 20px;
-  font-weight: bold;
-  background: #2563eb;
-  color: white;
-  text-decoration: none;
-  border-radius: 10px;
-  transition: all 0.2s ease;
-}
-
-.upload-button:hover {
-  background: #1d4ed8;
-  transform: translateY(-1px);
-}
-
-.upload-button:active {
-  transform: translateY(0);
-}
-
-    #status {
-      margin-top: 12px;
-      min-height: 22px;
+    .upload-button {
+      display: inline-block;
+      padding: 16px 32px;
+      font-size: 18px;
       font-weight: bold;
+      background: #2563eb;
+      color: white;
+      text-decoration: none;
+      border-radius: 10px;
+      transition: all 0.2s ease;
     }
 
-    .ok {
-      color: #166534;
+    .upload-button:hover {
+      background: #1d4ed8;
+      transform: translateY(-1px);
     }
 
-    .err {
-      color: #b91c1c;
+    .upload-button:active {
+      transform: translateY(0);
     }
 
     .muted {
       color: #666;
-      font-size: 14px;
+      font-size: 13px;
+      margin-top: 8px;
     }
 
-    .puzzle {
-      border: 1px solid #ddd;
-      padding: 12px;
-      margin: 10px 0;
-      border-radius: 8px;
+    /* Grid */
+    .puzzle-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+
+    @media (max-width: 700px) {
+      .puzzle-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (min-width: 701px) and (max-width: 900px) {
+      .puzzle-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* Card */
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      border: 2px solid transparent;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.13);
+      border-color: #2563eb;
+    }
+
+    .card:active {
+      transform: translateY(0);
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: bold;
+      color: #1a1a2e;
+    }
+
+    .card-author {
+      font-size: 13px;
+      color: #666;
+    }
+
+    .card-meta {
+      display: flex;
+      gap: 12px;
+      font-size: 13px;
+      color: #555;
+      flex-wrap: wrap;
+    }
+
+    .card-meta span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: auto;
+      padding-top: 10px;
+      border-top: 1px solid #eee;
+    }
+
+    .stars {
+      font-size: 18px;
+      color: #f59e0b;
+      letter-spacing: 2px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .stars span {
+      transition: transform 0.1s;
+      display: inline-block;
+    }
+
+    .stars span:hover {
+      transform: scale(1.3);
+    }
+
+    .vote-count {
+      font-size: 12px;
+      color: #999;
+    }
+
+    .play-hint {
+      font-size: 12px;
+      color: #2563eb;
+      font-weight: bold;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .card:hover .play-hint {
+      opacity: 1;
     }
 
     .empty {
@@ -100,24 +179,18 @@
   <h1>🧩 Puzzle Hub</h1>
 
   <h2>Create</h2>
-
-<div class="upload-cta">
-  <a href="/validator.html" class="upload-button">
-    ➕ Upload New Puzzle
-  </a>
-  <div class="muted">Use the validator tool to create and upload puzzles</div>
-</div>
+  <div class="upload-cta">
+    <a href="/validator.html" class="upload-button">➕ Upload New Puzzle</a>
+    <div class="muted">Use the validator tool to create and upload puzzles</div>
+  </div>
 
   <h2>Browse</h2>
   <div id="list"></div>
 
-
-<script>
-
+  <script>
     async function load() {
       const res = await fetch("/api/puzzles");
       const puzzles = await res.json();
-
       const list = document.getElementById("list");
       list.innerHTML = "";
 
@@ -126,33 +199,59 @@
         return;
       }
 
-      puzzles.forEach(p => {
-        const div = document.createElement("div");
-        div.className = "puzzle";
+      const grid = document.createElement("div");
+      grid.className = "puzzle-grid";
 
+      puzzles.forEach(p => {
         const rating = Number(p.rating || 0);
         const votes = Number(p.votes || 0);
+        const size = p.size || "?x?";
+        const author = escapeHtml(p.author || "Anonymous");
+        const date = p.created_at
+          ? new Date(p.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+          : "";
 
-        div.innerHTML = `
-          <b>${escapeHtml(p.name)}</b>
-<div class="muted">by ${escapeHtml(p.author || "Anonymous")}</div>
-          <div>⭐ ${rating.toFixed(2)} (${votes} vote${votes === 1 ? "" : "s"})</div>
-          <button onclick="play(${p.id})">Play</button>
-          <button onclick="rate(${p.id},5)">Rate 5</button>
-          <button onclick="rate(${p.id},4)">Rate 4</button>
-          <button onclick="rate(${p.id},3)">Rate 3</button>
-          <button onclick="rate(${p.id},2)">Rate 2</button>
-          <button onclick="rate(${p.id},1)">Rate 1</button>
+        const card = document.createElement("div");
+        card.className = "card";
+        card.onclick = () => play(p.id);
+
+        card.innerHTML = `
+          <div class="card-title">${escapeHtml(p.name)}</div>
+          <div class="card-author">by ${author}</div>
+          <div class="card-meta">
+            <span>🔲 ${escapeHtml(size)}</span>
+            ${date ? `<span>📅 ${date}</span>` : ""}
+          </div>
+          <div class="card-footer">
+            <div>
+              <div class="stars" onclick="event.stopPropagation()" data-id="${p.id}">
+                ${renderStars(rating, p.id)}
+              </div>
+              <div class="vote-count">${votes} vote${votes === 1 ? "" : "s"}</div>
+            </div>
+            <div class="play-hint">▶ Play</div>
+          </div>
         `;
 
-        list.appendChild(div);
+        grid.appendChild(card);
       });
+
+      list.appendChild(grid);
     }
 
-      async function play(id) {
-  console.log("Navigating to puzzle:", id);
-  window.location.href = "/game?id=" + encodeURIComponent(id);
-}
+    function renderStars(rating, id) {
+      const rounded = Math.round(rating);
+      let html = "";
+      for (let i = 1; i <= 5; i++) {
+        const filled = i <= rounded ? "★" : "☆";
+        html += `<span onclick="rate(${id}, ${i})" title="Rate ${i}">${filled}</span>`;
+      }
+      return html;
+    }
+
+    async function play(id) {
+      window.location.href = "/game?id=" + encodeURIComponent(id);
+    }
 
     async function rate(id, value) {
       await fetch("/api/rate", {
@@ -160,7 +259,6 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, rating: value })
       });
-
       load();
     }
 
@@ -175,6 +273,5 @@
 
     load();
   </script>
-
 </body>
 </html>
