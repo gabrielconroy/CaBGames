@@ -570,26 +570,29 @@ async function uploadPuzzle(){
   try {
 
     const res = await fetch("/api/upload", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-    data: cleanCats,
-    author: author
-  })
-});
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        data: cleanCats,
+        author: author
+      })
+    });
 
-const text = await res.text(); // 👈 not .json()
+    const result = await res.json();
 
-console.log("UPLOAD RESPONSE:", text);
+    if(res.ok){
+      alert("✅ Puzzle uploaded successfully!");
+      window.location.href = "/";
+    } else {
+      alert("❌ Upload failed: " + (result.error || "Unknown error"));
+    }
 
-if(res.ok){
-  alert("✅ Puzzle uploaded successfully!");
-  window.location.href = "/";
-} else {
-  alert("❌ Upload failed:\n" + text);
-}
+  } catch(err){
+    console.error(err);
+    alert("❌ Upload failed");
+  }
 }
 
 </script>
