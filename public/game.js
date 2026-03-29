@@ -700,6 +700,7 @@ function returnToBoard(){
 }
 
 function startDotDance(){
+	console.log("Tiles found:", document.querySelectorAll(".bigbut").length, "Disabled:", document.querySelectorAll(".bigbut:disabled").length);
   document.getElementById("return-to-board").style.display = "block";
 
   const canvas = document.getElementById("dotdance");
