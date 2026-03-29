@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Category Import Tool</title>
+  <style>
+  body {
+    font-family: sans-serif;
+    padding: 20px;
+    background: #111;
+    color: #eee;
+  }
+
+  .container {
+    display: flex;
+    gap: 20px;
+    height: 70vh;
+  }
+
+  .left {
+    flex: 0 0 45%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .right {
+    flex: 1;
+    background: #181818;
+    border: 1px solid #444;
+    padding: 10px;
+    overflow-y: auto;
+  }
+
+  textarea {
+    width: 100%;
+    height: 100%;
+    background: #222;
+    color: #eee;
+    border: 1px solid #444;
+    padding: 10px;
+    font-family: monospace;
+    resize: none;
+  }
+
+  button {
+    margin: 10px 5px 10px 0;
+    padding: 10px 15px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  #output {
+    margin-top: 15px;
+    font-weight: bold;
+    white-space: pre-line;
+  }
+
+  .category {
+    margin-bottom: 15px;
+  }
+
+  .category-title {
+    color: #6cf;
+    font-weight: bold;
+  }
+
+  .category-item {
+    margin-left: 10px;
+    color: #ccc;
+  }
+</style>
+</head>
+<body>
+
+<h2>🧩 Category Import Tool</h2>
+
+<p>Paste your raw list below. If you specify the category size, category titles should be auto-detected:</p>
+
+<div class="container">
+
+  <div class="left">
+    <textarea id="pasteBox"></textarea>
+
+    <label>
+      Items per category:
+      <input id="catSize" type="number" min="1" placeholder="e.g. 25">
+    </label>
+	
+	<label>
+	  Author:
+	  <input id="author" type="text" placeholder="Optional name">
+	</label>
+
+    <div>
+      <button onclick="runImport()">Validate</button>
+	  <button onclick="uploadPuzzle()">Upload</button>
+      <button onclick="download()">Download JS</button>
+      <button onclick="downloadAnyway()">Download Anyway</button>
+    </div>
+  </div>
+
+  <div class="right" id="preview">
+    <b>Category preview will appear here</b>
+  </div>
+
+</div>
+
+<div id="output"></div>
+
+
+<div id="output"></div>
+
+<script>
+
+let parsedCats = null;
+
+function parseCategories(rawText, maxItemsPerCategory = null) {
+  const rawLines = rawText.split("\n");
+  const cats = {};
+
+  let currentCategory = null;
+
+  for (let i = 0; i < rawLines.length; i++) {
+    let line = rawLines[i].trim();
+
+    if (!line) continue;
+
+    // 🔥 CATEGORY: "1. Category" or "1 - Category"
+    const catMatch = line.match(/^\d+\s*[\.\-]\s*(.+)$/);
+
+    if (catMatch) {
+      currentCategory = catMatch[1].trim();
+
+      cats[currentCategory] = {
+        items: [],
+        lines: [],
+        headerLine: i,
+        headerText: rawLines[i]
+      };
+
+      continue;
+    }
+
+    // If no category yet, skip
+    if (!currentCategory) continue;
+
+    // 🔧 Clean item
+    let itemText = line
+      .replace(/^["']|["']$/g, "")  // remove quotes
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (itemText) {
+      cats[currentCategory].items.push(itemText);
+      cats[currentCategory].lines.push(i);
+    }
+  }
+
+  return cats;
+}
+
+function renderPreview(cats) {
+  const preview = document.getElementById("preview");
+  const textarea = document.getElementById("pasteBox");
+
+  preview.innerHTML = "";
+
+  const names = Object.keys(cats);
+
+  names.forEach((name, idx) => {
+    const block = document.createElement("div");
+    block.className = "category";
+
+    const title = document.createElement("div");
+    title.className = "category-title";
+    title.textContent = `${idx + 1}. ${name}`;
+    title.style.cursor = "pointer";
+
+    // 🔗 Click → jump to category
+    title.onclick = () => {
+  const cat = cats[name];
+  jumpToCategory(cat.headerText, cat.headerLine);
+};
+
+    block.appendChild(title);
+
+    cats[name].items.forEach(item => {
+      const el = document.createElement("div");
+      el.className = "category-item";
+      el.textContent = item;
+      block.appendChild(el);
+    });
+
+    preview.appendChild(block);
+  });
+}
+
+
+
+function debugCounts(cats){
+
+  const report = [];
+
+  for(const name in cats){
+    report.push(`${name}: ${cats[name].length}`);
+  }
+
+  console.log(report.join("\n"));
+
+  return report;
+}
+
+function validateCats(cats, expectedItems = null, expectedCategories = null) {
+
+  const names = Object.keys(cats);
+  const seen = new Map();
+
+  const blocking = [];
+  const warnings = [];
+
+  // Detect item count (mode)
+  const itemCounts = names.map(name => cats[name].items.length);
+
+  const freq = {};
+  itemCounts.forEach(n => freq[n] = (freq[n] || 0) + 1);
+
+  const detectedItemCount = parseInt(
+    Object.entries(freq).sort((a, b) => b[1] - a[1])[0][0]
+  );
+
+  const itemsPerCategory = expectedItems || detectedItemCount;
+
+  // Validate category count (only if explicitly expected)
+  if (expectedCategories && names.length !== expectedCategories) {
+    blocking.push({
+      msg: `Expected ${expectedCategories} categories, found ${names.length}`
+    });
+  }
+
+  for (const name of names) {
+    const arr = cats[name].items;
+    const lines = cats[name].lines;
+
+    if (arr.length !== itemsPerCategory) {
+      blocking.push({
+        msg: `"${name}" has ${arr.length} items (expected ${itemsPerCategory})`,
+        headerText: cats[name].headerText
+      });
+    }
+
+    arr.forEach((item, idx) => {
+      const line = lines[idx];
+
+      if (item.trim() === "") {
+        blocking.push({
+          msg: `"${name}" contains an empty entry`,
+          line
+        });
+      }
+
+      if (seen.has(item)) {
+        const first = seen.get(item);
+
+        warnings.push({
+          msg: `Duplicate: "${item}"`,
+          line,
+          otherLine: first.line
+        });
+      } else {
+        seen.set(item, { line, category: name });
+      }
+    });
+  }
+
+  return { blocking, warnings };
+}
+
+function jumpToCategory(headerText, headerLine) {
+
+  const textarea = document.getElementById("pasteBox");
+
+  if (headerLine === undefined) return;
+
+  const lines = textarea.value.split("\n");
+
+  let pos = 0;
+  for (let i = 0; i < headerLine; i++) {
+    pos += lines[i].length + 1;
+  }
+
+  textarea.focus();
+  textarea.setSelectionRange(pos, pos + lines[headerLine].length);
+
+  textarea.scrollTop = Math.max(0, (headerLine - 3) * 18);
+}
+
+function jumpToLine(lineNumber) {
+
+  const textarea = document.getElementById("pasteBox");
+  const lines = textarea.value.split("\n");
+
+  let pos = 0;
+  for (let i = 0; i < lineNumber; i++) {
+    pos += lines[i].length + 1;
+  }
+
+  textarea.focus();
+  textarea.setSelectionRange(pos, pos + lines[lineNumber].length);
+
+  // 🔥 precise scroll
+  const lineHeight = 18;
+  textarea.scrollTop = (lineNumber - 3) * lineHeight;
+}
+
+function scrollPreviewToCategory(index){
+  const preview = document.getElementById("preview");
+  const blocks = preview.querySelectorAll(".category");
+
+  if (blocks[index]) {
+    blocks[index].scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
+function convertJsToRawText(raw) {
+  try {
+    // Remove "var cats =" if present
+    const cleaned = raw
+      .replace(/^var\s+cats\s*=\s*/, "")
+      .replace(/;$/, "");
+
+    const obj = JSON.parse(cleaned);
+
+    let output = "";
+
+    for (const category in obj) {
+      output += category + "\n";
+
+      obj[category].forEach(item => {
+        output += item + "\n";
+      });
+
+      output += "\n";
+    }
+
+    return output.trim();
+
+  } catch (e) {
+    console.error("JS parse failed:", e);
+    alert("Invalid JS format. Make sure it's a valid cats object.");
+    return raw;
+  }
+}
+
+function runImport() {
+
+  const output = document.getElementById("output");
+  output.innerHTML = "";
+
+  let raw = document.getElementById("pasteBox").value;
+  parsedCats = null;
+
+  const sizeInput = document.getElementById("catSize").value;
+
+  if (!sizeInput) {
+    alert("Please enter the number of items per category before validating.");
+    return;
+  }
+
+  const forcedSize = parseInt(sizeInput);
+
+  // ✅ NORMALISE INPUT FIRST
+  if (raw.includes("var cats") || raw.includes("{")) {
+    raw = convertJsToRawText(raw);
+  }
+
+  // ✅ ALWAYS PARSE AFTER NORMALISING
+  parsedCats = parseCategories(raw, forcedSize);
+
+ 
+  // =========================
+  // ALWAYS RUN THESE
+  // =========================
+
+  renderPreview(parsedCats);
+
+  const { blocking, warnings } = validateCats(parsedCats);
+
+  const names = Object.keys(parsedCats);
+
+  const itemCounts = names.map(name => parsedCats[name].items.length);
+  const freq = {};
+  itemCounts.forEach(n => freq[n] = (freq[n] || 0) + 1);
+
+  const detectedItemCount = parseInt(
+    Object.entries(freq).sort((a, b) => b[1] - a[1])[0][0]
+  );
+
+  const displaySize = forcedSize || detectedItemCount;
+
+  output.innerHTML += `Detected format: ${names.length} × ${displaySize}<br><br>`;
+
+  if (blocking.length === 0 && warnings.length === 0) {
+    output.innerHTML += `✅ Valid ${names.length} × ${displaySize} dataset`;
+    return;
+  }
+
+  output.innerHTML += "<b>Validation results:</b><br><br>";
+
+  // =========================
+  // ERRORS
+  // =========================
+
+  if (blocking.length > 0) {
+    output.innerHTML += "<b style='color:#f88'>❌ Blocking errors:</b><br>";
+
+    blocking.forEach((err, i) => {
+      const row = document.createElement("div");
+
+      const label = document.createElement("span");
+      label.textContent = `${i + 1}. ${err.msg} `;
+      row.appendChild(label);
+
+      if (err.line !== undefined) {
+        const jump = document.createElement("span");
+        jump.textContent = "[jump]";
+        jump.style.cursor = "pointer";
+        jump.style.color = "#8cf";
+        jump.onclick = () => jumpToLine(err.line);
+        row.appendChild(jump);
+
+      } else if (err.headerText) {
+        const jump = document.createElement("span");
+        jump.textContent = "[jump to category]";
+        jump.style.cursor = "pointer";
+        jump.style.color = "#8cf";
+        jump.onclick = () => jumpToCategory(err.headerText, err.headerLine);
+        row.appendChild(jump);
+      }
+
+      output.appendChild(row);
+    });
+  }
+
+  // =========================
+  // WARNINGS
+  // =========================
+
+  if (warnings.length > 0) {
+    output.innerHTML += "<br><b style='color:#ffb84d'>⚠️ Duplicates (allowed):</b><br>";
+
+    warnings.forEach((err, i) => {
+      const row = document.createElement("div");
+
+      const label = document.createElement("span");
+      label.textContent = `${i + 1}. ${err.msg} `;
+      row.appendChild(label);
+
+      const first = document.createElement("span");
+      first.textContent = "[first]";
+      first.style.cursor = "pointer";
+      first.style.color = "#fc8";
+      first.style.marginRight = "8px";
+      first.onclick = () => jumpToLine(err.otherLine);
+      row.appendChild(first);
+
+      const second = document.createElement("span");
+      second.textContent = "[duplicate]";
+      second.style.cursor = "pointer";
+      second.style.color = "#8cf";
+      second.onclick = () => jumpToLine(err.line);
+      row.appendChild(second);
+
+      output.appendChild(row);
+    });
+  }
+}
+
+function download(){
+
+  if(!parsedCats){
+    alert("Run validation first");
+    return;
+  }
+
+  const { blocking } = validateCats(parsedCats);
+
+  if(blocking.length > 0){
+    alert("Cannot download: fix blocking errors first");
+    return;
+  }
+
+  const cleanCats = {};
+
+  for(const key in parsedCats){
+    cleanCats[key] = parsedCats[key].items;
+  }
+
+  const content = "var cats = " + JSON.stringify(cleanCats, null, 2) + ";";
+
+  const blob = new Blob([content], {type: "text/javascript"});
+  const a = document.createElement("a");
+
+  a.href = URL.createObjectURL(blob);
+  a.download = "categories-data.js";
+  a.click();
+
+  URL.revokeObjectURL(a.href);
+}
+
+function downloadAnyway(){
+
+  if(!parsedCats){
+    alert("Run validation first");
+    return;
+  }
+
+  const { blocking, warnings } = validateCats(parsedCats);
+
+  if(blocking.length > 0){
+    alert("Cannot download: structural errors must be fixed");
+    return;
+  }
+
+  if(warnings.length > 0){
+    const proceed = confirm(
+      "This set contains duplicates (allowed for gameplay).\n\nDownload anyway?"
+    );
+    if(!proceed) return;
+  }
+
+  const cleanCats = {};
+
+  for(const key in parsedCats){
+    cleanCats[key] = parsedCats[key].items;
+  }
+
+  const content = "var cats = " + JSON.stringify(cleanCats, null, 2) + ";";
+
+  const blob = new Blob([content], {type: "text/javascript"});
+  const a = document.createElement("a");
+
+  a.href = URL.createObjectURL(blob);
+  a.download = "categories-data.js";
+  a.click();
+
+  URL.revokeObjectURL(a.href);
+}
+
+async function uploadPuzzle(){
+
+  if(!parsedCats){
+    alert("Run validation first");
+    return;
+  }
+
+  const { blocking } = validateCats(parsedCats);
+
+  if(blocking.length > 0){
+    alert("Fix errors before uploading");
+    return;
+  }
+
+  const author = document.getElementById("author").value || "Anonymous";
+
+  // Convert to clean format
+  const cleanCats = {};
+  for(const key in parsedCats){
+    cleanCats[key] = parsedCats[key].items;
+  }
+
+  try {
+
+    const res = await fetch("/api/upload", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        data: cleanCats,
+        author: author
+      })
+    });
+
+    const result = await res.json();
+
+    if(res.ok){
+      alert("✅ Puzzle uploaded successfully!");
+      window.location.href = "/";
+    } else {
+      alert("❌ Upload failed: " + (result.error || "Unknown error"));
+    }
+
+  } catch(err){
+    console.error(err);
+    alert("❌ Upload failed");
+  }
+}
+
+</script>
+
+</body>
+</html>
