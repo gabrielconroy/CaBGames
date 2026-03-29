@@ -1,15 +1,29 @@
-export async function onRequestPost({ request, env }) {
-  const body = await request.json();
+export async function onRequestPost(context) {
 
-  if (!body.name || !body.data) {
-    return new Response("Invalid", { status: 400 });
-  }
+  const db = context.env.DB;
 
-  const result = await env.DB.prepare(
-    "INSERT INTO puzzles (name, data) VALUES (?, ?)"
-  )
-    .bind(body.name, JSON.stringify(body.data))
-    .run();
+  const body = await context.request.json();
 
-  return Response.json({ success: true, id: result.meta.last_row_id });
+  const data = JSON.stringify(body.data);
+  const author = body.author || "Anonymous";
+
+  // 🔥 Auto-numbering
+  const countRes = await db.prepare("SELECT COUNT(*) as count FROM puzzles").first();
+  const nextNumber = (countRes?.count || 0) + 1;
+
+  const name = `Puzzle #${nextNumber}`;
+
+  const result = await db.prepare(`
+    INSERT INTO puzzles (name, author, data, rating, votes)
+    VALUES (?, ?, ?, 0, 0)
+  `)
+  .bind(name, author, data)
+  .run();
+
+  return new Response(JSON.stringify({
+    success: true,
+    id: result.meta.last_row_id
+  }), {
+    headers: { "Content-Type": "application/json" }
+  });
 }
