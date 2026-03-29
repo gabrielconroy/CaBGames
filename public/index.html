@@ -35,6 +35,32 @@
       font-size: 14px;
       cursor: pointer;
     }
+	
+	.upload-cta {
+  margin: 20px 0 30px 0;
+  text-align: center;
+}
+
+.upload-button {
+  display: inline-block;
+  padding: 18px 32px;
+  font-size: 20px;
+  font-weight: bold;
+  background: #2563eb;
+  color: white;
+  text-decoration: none;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.upload-button:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.upload-button:active {
+  transform: translateY(0);
+}
 
     #status {
       margin-top: 12px;
@@ -73,200 +99,20 @@
 
   <h1>🧩 Puzzle Hub</h1>
 
-  <h2>Upload Puzzle</h2>
+  <h2>Create</h2>
 
-<input id="name" placeholder="Puzzle name"><br><br>
-
-<!-- FILE UPLOAD -->
-<input type="file" id="fileInput" accept=".js,.json"><br><br>
-
-<!-- TEXT OPTION -->
-<textarea id="json" rows="10" cols="50" placeholder="Paste cats JSON OR JS"></textarea><br><br>
-
-<button onclick="upload()">Upload</button>
-
-<p id="status"></p>
+<div class="upload-cta">
+  <a href="/import" class="upload-button">
+    ➕ Upload New Puzzle
+  </a>
+  <div class="muted">Use the validator tool to create and upload puzzles</div>
+</div>
 
   <h2>Browse</h2>
   <div id="list"></div>
 
-  <script>
-    function setStatus(text, kind = "") {
-      const el = document.getElementById("status");
-      el.textContent = text || "";
-      el.className = kind;
-    }
 
-    function clearForm() {
-      document.getElementById("name").value = "";
-      document.getElementById("json").value = "";
-      setStatus("");
-    }
-	
-	document.getElementById("fileInput").addEventListener("change", async function (e) {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  const text = await file.text();
-
-  try {
-    // Handle "var cats = {...};" format
-    let cleaned = text.trim();
-
-    if (cleaned.startsWith("var cats")) {
-      cleaned = cleaned
-        .replace(/^var\s+cats\s*=\s*/, "")
-        .replace(/;?\s*$/, "");
-    }
-
-    const parsed = JSON.parse(cleaned);
-
-    // Put into textarea so existing upload() works
-    document.getElementById("json").value = JSON.stringify(parsed, null, 2);
-
-  } catch (err) {
-    alert("Invalid file format. Must contain valid cats JSON.");
-    console.error(err);
-  }
-});
-
-    function parseCatsInput(raw) {
-      let cleaned = raw.trim();
-
-      // Accept:
-      // var cats = { ... };
-      // let cats = { ... };
-      // const cats = { ... };
-      cleaned = cleaned.replace(/^(var|let|const)\s+cats\s*=\s*/i, "").trim();
-
-      // Remove trailing semicolon if present
-      cleaned = cleaned.replace(/;\s*$/, "").trim();
-
-      // First try strict JSON
-      try {
-        return JSON.parse(cleaned);
-      } catch (jsonErr) {
-        // Then fall back to JS object literal parsing
-        try {
-          return Function('"use strict"; return (' + cleaned + ');')();
-        } catch (jsErr) {
-          throw new Error("Could not parse puzzle data.");
-        }
-      }
-    }
-
-    function basicValidatePuzzleData(data) {
-      if (!data || typeof data !== "object" || Array.isArray(data)) {
-        return "Puzzle data must be an object.";
-      }
-
-      const categories = Object.keys(data);
-
-      if (categories.length === 0) {
-        return "Puzzle must contain at least one category.";
-      }
-
-      const expectedCount = categories.length;
-      const seen = new Set();
-
-      for (const [catName, items] of Object.entries(data)) {
-        if (!Array.isArray(items)) {
-          return `Category "${catName}" must contain an array.`;
-        }
-
-        if (items.length !== expectedCount) {
-          return `Category "${catName}" has ${items.length} items; expected ${expectedCount}.`;
-        }
-
-        for (const item of items) {
-          if (typeof item !== "string" || !item.trim()) {
-            return `Category "${catName}" contains an invalid item.`;
-          }
-
-          const key = item.trim();
-          if (seen.has(key)) {
-            return `Duplicate item found: "${key}".`;
-          }
-          seen.add(key);
-        }
-      }
-
-      return null;
-    }
-
-    function formatInput() {
-      const raw = document.getElementById("json").value;
-
-      try {
-        const data = parseCatsInput(raw);
-        document.getElementById("json").value =
-          "var cats = " + JSON.stringify(data, null, 2) + ";";
-        setStatus("Formatted successfully.", "ok");
-      } catch (err) {
-        setStatus("Could not format: invalid input.", "err");
-      }
-    }
-
-
-function parseCats(text) {
-  // 🔧 REMOVE BOM + trim
-  text = text.replace(/^\uFEFF/, "").trim();
-
-  try {
-    return JSON.parse(text);
-  } catch {}
-
-  try {
-    const match = text.match(/var\s+cats\s*=\s*(\{[\s\S]*\});?/);
-    if (match) {
-      return JSON.parse(match[1]);
-    }
-  } catch {}
-
-  throw new Error("Invalid format. Use JSON or 'var cats = {...}'");
-}
-
-async function upload() {
-  const name = document.getElementById("name").value;
-  const fileInput = document.getElementById("fileInput");
-  const textarea = document.getElementById("json");
-  const status = document.getElementById("status");
-
-  let text = "";
-
-  try {
-    // PRIORITY: file upload
-    if (fileInput.files.length > 0) {
-      text = await fileInput.files[0].text();
-    } else if (textarea.value.trim()) {
-      text = textarea.value;
-    } else {
-      status.innerText = "❌ Provide a file or paste data";
-      return;
-    }
-
-    const data = parseCats(text);
-
-    const res = await fetch("/api/upload", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ name, data })
-});
-
-    if (!res.ok) {
-      throw new Error(await res.text());
-    }
-
-    status.innerText = "✅ Upload successful!";
-    textarea.value = "";
-    fileInput.value = "";
-
-    load();
-
-  } catch (err) {
-    status.innerText = "❌ " + err.message;
-  }
-}
+<script>
 
     async function load() {
       const res = await fetch("/api/puzzles");
