@@ -713,6 +713,45 @@ function devWin(){
   triggerWinState();
 }
 
+function sampleTextPositions(text, count, canvasWidth, canvasHeight){
+  const offscreen = document.createElement("canvas");
+  offscreen.width = canvasWidth;
+  offscreen.height = canvasHeight;
+  const octx = offscreen.getContext("2d");
+
+  // Scale font size to canvas width
+  const fontSize = Math.min(canvasWidth / text.length * 1.2, canvasHeight * 0.3);
+  octx.fillStyle = "white";
+  octx.font = `bold ${fontSize}px Arial`;
+  octx.textAlign = "center";
+  octx.textBaseline = "middle";
+  octx.fillText(text, canvasWidth / 2, canvasHeight / 2);
+
+  // Sample lit pixels
+  const imageData = octx.getImageData(0, 0, canvasWidth, canvasHeight);
+  const pixels = imageData.data;
+  const litPixels = [];
+
+  // Sample every Nth pixel to keep performance reasonable
+  const step = 4;
+  for(let y = 0; y < canvasHeight; y += step){
+    for(let x = 0; x < canvasWidth; x += step){
+      const idx = (y * canvasWidth + x) * 4;
+      if(pixels[idx + 3] > 128){ // alpha threshold
+        litPixels.push({ x, y });
+      }
+    }
+  }
+
+  // Shuffle and take exactly `count` positions
+  for(let i = litPixels.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [litPixels[i], litPixels[j]] = [litPixels[j], litPixels[i]];
+  }
+
+  return litPixels.slice(0, count);
+}
+
 function startDotDance(){
   hideTooltip();
   document.getElementById("return-to-board").style.display = "block";
@@ -772,10 +811,13 @@ function startDotDance(){
   const EASE = 0.04;
 
   function advanceStage(){
-    stage = (stage + 1) % 5;
-    setTimeout(advanceStage, STAGE_DURATION);
+  stage = (stage + 1) % totalStages;
+  if(stage === 4){
+    textPhase = 0;
+    setTimeout(() => { textPhase = 1; }, 1500);
   }
   setTimeout(advanceStage, STAGE_DURATION);
+
 
   function animate(){
     requestAnimationFrame(animate);
@@ -831,7 +873,18 @@ function startDotDance(){
   d.vy = (targetY - d.y) * 0.02;
 }
 
-else if(stage === 4){
+else if(stage === 4 && useTextStage){
+  const positions = textPhase === 0 ? textPositions1 : textPositions2;
+  const target = positions[i % positions.length];
+  if(target){
+    d.x += (target.x - d.x) * 0.03;
+    d.y += (target.y - d.y) * 0.03;
+    d.vx = (target.x - d.x) * 0.03;
+    d.vy = (target.y - d.y) * 0.03;
+  }
+}
+
+else if(stage === 5){
   const t = (i / dots.length) * Math.PI * 2 + time * 0.2;
   const targetX = centerX + lissRadius * Math.sin(N * t + time * 0.15);
   const targetY = centerY + lissRadius * Math.sin((N + 2) * t + Math.PI / 4);
