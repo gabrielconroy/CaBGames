@@ -692,6 +692,7 @@ function returnToBoard(){
 }
 
 function startDotDance(){
+  hideTooltip();
   document.getElementById("return-to-board").style.display = "block";
   setTimeout(() => {
     document.getElementById("return-to-board").style.opacity = "1";
@@ -704,20 +705,20 @@ function startDotDance(){
   const centerX = canvas.width / 2;
   const centerY = canvas.height / 2;
 
-  const N = Object.keys(cats).length;
+  const N = Object.keys(cats).length; // number of categories = M for square puzzles
   const lissRadius = Math.min(canvas.width, canvas.height) * 0.35;
   const dots = [];
 
   let tiles = document.querySelectorAll(".bigbut:disabled");
   if(tiles.length === 0) tiles = document.querySelectorAll(".bigbut");
 
-  // Capture tile colours and positions BEFORE hiding board
+  // One colour per tile (category), N dots per tile
   tiles.forEach(tile => {
     const rect = tile.getBoundingClientRect();
     let color = getComputedStyle(tile).backgroundColor;
     if(!color || color === "rgba(0, 0, 0, 0)" || color === "transparent") color = "#888";
 
-    // Brighten colour for dark background
+    // Brighten for dark background
     const tmp = document.createElement("canvas");
     tmp.width = tmp.height = 1;
     const tctx = tmp.getContext("2d");
@@ -734,11 +735,10 @@ function startDotDance(){
       dots.push({
         x: cx + (Math.random() - 0.5) * rect.width,
         y: cy + (Math.random() - 0.5) * rect.height,
-        originX: cx,
-        originY: cy,
         vx: (Math.random() - 0.5) * 3,
         vy: (Math.random() - 0.5) * 3,
-        color: brightColor
+        color: brightColor,
+        group: dots.length % N  // which colour group (0 to N-1)
       });
     }
   });
@@ -746,27 +746,16 @@ function startDotDance(){
   // Fade background
   const fade = document.getElementById("win-fade");
   fade.style.opacity = "0.92";
-
   document.getElementById("board").style.visibility = "hidden";
 
   let stage = 0;
   let time = 0;
-  const STAGE_DURATION = 3000;   // ms per stage
-  const EASE = 0.04;             // slower easing for smoother transitions
+  const STAGE_DURATION = 3000;
+  const EASE = 0.04;
 
   function advanceStage(){
     stage = (stage + 1) % 5;
-
-    if(stage === 0){
-      // Reset to origin for scatter
-      dots.forEach(d => {
-        d.x = d.originX + (Math.random() - 0.5) * 20;
-        d.y = d.originY + (Math.random() - 0.5) * 20;
-        d.vx = (Math.random() - 0.5) * 3;
-        d.vy = (Math.random() - 0.5) * 3;
-      });
-    }
-
+    // No position reset — dots flow from wherever they are
     setTimeout(advanceStage, STAGE_DURATION);
   }
   setTimeout(advanceStage, STAGE_DURATION);
@@ -774,42 +763,50 @@ function startDotDance(){
   function animate(){
     requestAnimationFrame(animate);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    time += 0.01; // slower time = slower animation = epilepsy safer
+    time += 0.01;
 
-    // Gentle pulse: dot radius breathes between 3 and 5
     const pulse = 4 + Math.sin(time * 1.5) * 1.5;
 
     dots.forEach((d, i) => {
 
       if(stage === 0){
-        // Scatter with soft bounce
+        // Scatter — just drift from current position, bounce off edges
         d.x += d.vx;
         d.y += d.vy;
-        d.vx *= 0.995; // gentle friction so dots don't fly forever
-        d.vy *= 0.995;
+        d.vx *= 0.998;
+        d.vy *= 0.998;
+        // Nudge if nearly stopped
+        if(Math.abs(d.vx) < 0.3) d.vx += (Math.random() - 0.5) * 0.5;
+        if(Math.abs(d.vy) < 0.3) d.vy += (Math.random() - 0.5) * 0.5;
         if(d.x < 0 || d.x > canvas.width)  d.vx *= -1;
         if(d.y < 0 || d.y > canvas.height) d.vy *= -1;
       }
 
       else if(stage === 1){
-        // Grid — N columns × N rows
+        // Grid
         const col = i % N;
         const row = Math.floor(i / N);
         const spacing = Math.min(canvas.width, canvas.height) / (N + 2);
+        const totalRows = Math.ceil(dots.length / N);
         const targetX = centerX + (col - (N - 1) / 2) * spacing;
-        const targetY = centerY + (row - (Math.floor(dots.length / N) - 1) / 2) * spacing;
+        const targetY = centerY + (row - (totalRows - 1) / 2) * spacing;
         d.x += (targetX - d.x) * EASE;
         d.y += (targetY - d.y) * EASE;
+        // Carry momentum into next stage
+        d.vx = (targetX - d.x) * EASE;
+        d.vy = (targetY - d.y) * EASE;
       }
 
       else if(stage === 2){
-        // Spiral ring — evenly spaced, slow rotation
+        // Spiral ring
         const angle = (i / dots.length) * Math.PI * 2 + time * 0.3;
         const radius = Math.min(canvas.width, canvas.height) * 0.3;
         const targetX = centerX + Math.cos(angle) * radius;
         const targetY = centerY + Math.sin(angle) * radius;
         d.x += (targetX - d.x) * EASE;
         d.y += (targetY - d.y) * EASE;
+        d.vx = (targetX - d.x) * EASE;
+        d.vy = (targetY - d.y) * EASE;
       }
 
       else if(stage === 3){
@@ -819,6 +816,8 @@ function startDotDance(){
         const targetY = centerY + lissRadius * Math.sin((N + 1) * t);
         d.x += (targetX - d.x) * EASE;
         d.y += (targetY - d.y) * EASE;
+        d.vx = (targetX - d.x) * EASE;
+        d.vy = (targetY - d.y) * EASE;
       }
 
       else if(stage === 4){
@@ -828,6 +827,8 @@ function startDotDance(){
         const targetY = centerY + lissRadius * Math.sin((N + 2) * t);
         d.x += (targetX - d.x) * EASE;
         d.y += (targetY - d.y) * EASE;
+        d.vx = (targetX - d.x) * EASE;
+        d.vy = (targetY - d.y) * EASE;
       }
 
       ctx.beginPath();
