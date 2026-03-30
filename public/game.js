@@ -819,9 +819,11 @@ function startDotDance(){
 
   function advanceStage(){
     stage = (stage + 1) % totalStages;
+    // Zero velocity on transition to prevent flinging
+    dots.forEach(d => { d.vx = 0; d.vy = 0; });
     if(stage === 4){
       textPhase = 0;
-      setTimeout(() => { textPhase = 1; }, 2500); // switch to dot count after 2.5s
+      setTimeout(() => { textPhase = 1; }, 2500);
     }
     setTimeout(advanceStage, STAGE_DURATIONS[stage] || 3000);
   }
@@ -854,10 +856,10 @@ function startDotDance(){
         const totalRows = Math.ceil(dots.length / N);
         const targetX = centerX + (col - (N - 1) / 2) * spacing;
         const targetY = centerY + (row - (totalRows - 1) / 2) * spacing;
-        d.x += (targetX - d.x) * 0.02;
-        d.y += (targetY - d.y) * 0.02;
-        d.vx = (targetX - d.x) * 0.02;
-        d.vy = (targetY - d.y) * 0.02;
+        d.x += (targetX - d.x) * 0.06;
+        d.y += (targetY - d.y) * 0.06;
+        d.vx = (targetX - d.x) * 0.06;
+        d.vy = (targetY - d.y) * 0.06;
       }
 
       else if(stage === 2){
@@ -865,10 +867,10 @@ function startDotDance(){
         const radius = Math.min(canvas.width, canvas.height) * 0.3;
         const targetX = centerX + Math.cos(angle) * radius;
         const targetY = centerY + Math.sin(angle) * radius;
-        d.x += (targetX - d.x) * EASE;
-        d.y += (targetY - d.y) * EASE;
-        d.vx = (targetX - d.x) * EASE;
-        d.vy = (targetY - d.y) * EASE;
+        d.x += (targetX - d.x) * 0.04;
+        d.y += (targetY - d.y) * 0.04;
+        d.vx = (targetX - d.x) * 0.04;
+        d.vy = (targetY - d.y) * 0.04;
       }
 
       else if(stage === 3){
@@ -881,14 +883,25 @@ function startDotDance(){
         d.vy = (targetY - d.y) * 0.02;
       }
 
-      else if(stage === 4 && useTextStage){
-        const positions = textPhase === 0 ? textPositions1 : textPositions2;
-        const target = positions[i % positions.length];
-        if(target){
-          d.x += (target.x - d.x) * 0.03;
-          d.y += (target.y - d.y) * 0.03;
-          d.vx = (target.x - d.x) * 0.03;
-          d.vy = (target.y - d.y) * 0.03;
+      else if(stage === 4){
+        if(useTextStage){
+          const positions = textPhase === 0 ? textPositions1 : textPositions2;
+          const target = positions[i % positions.length];
+          if(target){
+            d.x += (target.x - d.x) * 0.03;
+            d.y += (target.y - d.y) * 0.03;
+            d.vx = (target.x - d.x) * 0.03;
+            d.vy = (target.y - d.y) * 0.03;
+          }
+        } else {
+          // Small puzzle fallback — second Lissajous
+          const t = (i / dots.length) * Math.PI * 2 + time * 0.2;
+          const targetX = centerX + lissRadius * Math.sin(N * t + time * 0.15);
+          const targetY = centerY + lissRadius * Math.sin((N + 2) * t + Math.PI / 4);
+          d.x += (targetX - d.x) * 0.02;
+          d.y += (targetY - d.y) * 0.02;
+          d.vx = (targetX - d.x) * 0.02;
+          d.vy = (targetY - d.y) * 0.02;
         }
       }
 
