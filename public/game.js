@@ -838,7 +838,7 @@ function startDotDance(){
     time += 0.01;
 
     const pulse = 4 + Math.sin(time * 1.5) * 1.5;
-
+	const byColor = {};
     dots.forEach((d, i) => {
 
       if(stage === 0){
