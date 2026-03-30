@@ -822,24 +822,26 @@ function startDotDance(){
       }
 
       else if(stage === 3){
-        const t = (i / dots.length) * Math.PI * 2 + time * 0.2;
-        const targetX = centerX + lissRadius * Math.sin(N * t + time * 0.15);
-        const targetY = centerY + lissRadius * Math.sin((N + 1) * t);
-        d.x += (targetX - d.x) * EASE;
-        d.y += (targetY - d.y) * EASE;
-        d.vx = (targetX - d.x) * EASE;
-        d.vy = (targetY - d.y) * EASE;
-      }
+  const t = (i / dots.length) * Math.PI * 2 + time * 0.2;
+  const targetX = centerX + lissRadius * Math.sin(N * t + time * 0.15);
+  const targetY = centerY + lissRadius * Math.sin((N + 1) * t + Math.PI / 4);
+  d.x += (targetX - d.x) * 0.02;
+  d.y += (targetY - d.y) * 0.02;
+  d.vx = (targetX - d.x) * 0.02;
+  d.vy = (targetY - d.y) * 0.02;
+}
 
-      else if(stage === 4){
-        const t = (i / dots.length) * Math.PI * 2 + time * 0.2;
-        const targetX = centerX + lissRadius * Math.sin(N * t + time * 0.15);
-        const targetY = centerY + lissRadius * Math.sin((N + 2) * t);
-        d.x += (targetX - d.x) * EASE;
-        d.y += (targetY - d.y) * EASE;
-        d.vx = (targetX - d.x) * EASE;
-        d.vy = (targetY - d.y) * EASE;
-      }
+else if(stage === 4){
+  const t = (i / dots.length) * Math.PI * 2 + time * 0.2;
+  const targetX = centerX + lissRadius * Math.sin(N * t + time * 0.15);
+  const targetY = centerY + lissRadius * Math.sin((N + 2) * t + Math.PI / 4);
+  d.x += (targetX - d.x) * 0.02;
+  d.y += (targetY - d.y) * 0.02;
+  d.vx = (targetX - d.x) * 0.02;
+  d.vy = (targetY - d.y) * 0.02;
+}
+
+     
 
       ctx.beginPath();
       ctx.arc(d.x, d.y, pulse, 0, Math.PI * 2);
