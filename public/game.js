@@ -691,6 +691,28 @@ function returnToBoard(){
   button.style.display = "none";
 }
 
+function devWin(){
+  // Group tiles by category
+  const grouped = {};
+  gameState.flat().forEach(tile => {
+    if(!grouped[tile.category]) grouped[tile.category] = [];
+    grouped[tile.category].push(...tile.words);
+  });
+
+  // Rebuild gameState with one merged tile per category
+  gameState = Object.entries(grouped).map(([category, words]) => [{
+    category,
+    words
+  }]);
+
+  // Set score to winning value
+  score = M * (M - 1);
+  document.getElementById("score").textContent = score;
+
+  renderBoard();
+  triggerWinState();
+}
+
 function startDotDance(){
   hideTooltip();
   document.getElementById("return-to-board").style.display = "block";
