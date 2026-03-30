@@ -3,11 +3,6 @@ var cats;
 async function loadPuzzle() {
   const params = new URLSearchParams(window.location.search);
   const id = params.get("id");
-  const lastId = localStorage.getItem('puzzleId');
-if (lastId !== id) {
-  localStorage.clear();
-  localStorage.setItem('puzzleId', id);
-}
 
   if (!id) {
     document.getElementById("board").innerHTML = "<h2>No puzzle found</h2>";
@@ -73,11 +68,12 @@ function stringToLightColor(str) {
 }
 
 function saveState() {
-  localStorage.setItem('score', score + '');
-  localStorage.setItem('mistakes', mistakes + '');
-  localStorage.setItem('attemptedMistakes', JSON.stringify(Array.from(attemptedMistakes)));
-  // This now saves the array of arrays correctly
-  localStorage.setItem('gameState', JSON.stringify(gameState));
+  const id = new URLSearchParams(window.location.search).get("id");
+  const key = (k) => `puzzle_${id}_${k}`;
+  localStorage.setItem(key('score'), score + '');
+  localStorage.setItem(key('mistakes'), mistakes + '');
+  localStorage.setItem(key('attemptedMistakes'), JSON.stringify(Array.from(attemptedMistakes)));
+  localStorage.setItem(key('gameState'), JSON.stringify(gameState));
 }
 
 function fitButtonText(){
@@ -439,13 +435,15 @@ function shuffleArray(array) {
 }
 
 function loadState() {
-  const savedScore = localStorage.getItem('score');
-  let rawData = localStorage.getItem('gameState');
+  const id = new URLSearchParams(window.location.search).get("id");
+  const key = (k) => `puzzle_${id}_${k}`;
+
+  const savedScore = localStorage.getItem(key('score'));
+  let rawData = localStorage.getItem(key('gameState'));
   let flatList = [];
 
-  // 1. DETERMINE SOURCE DATA (Fresh vs Saved)
   if (savedScore === null || !rawData) {
-    // FRESH START: Create from categories
+    // FRESH START
     for (const [catName, words] of Object.entries(cats)) {
       for (let i = 0; i < M; i++) {
         flatList.push({ words: [words[i]], category: catName });
@@ -453,23 +451,16 @@ function loadState() {
     }
     shuffleArray(flatList);
   } else {
-    // LOAD SAVED: Parse JSON
+    // LOAD SAVED
     let loadedData = JSON.parse(rawData);
-
-    // MIGRATION/REFLOW LOGIC
-    // Whether it was 1D or 2D (of any width), flatten it to 1D
     if (Array.isArray(loadedData[0])) {
-      // It's 2D, flatten it
-      flatList = loadedData.flat(); 
+      flatList = loadedData.flat();
     } else {
-      // It's 1D, use as is
       flatList = loadedData;
     }
-    
-    // Restore scores
     score = Number(savedScore);
-    mistakes = Number(localStorage.getItem('mistakes') || 0);
-    attemptedMistakes = new Set(JSON.parse(localStorage.getItem('attemptedMistakes') || "[]"));
+    mistakes = Number(localStorage.getItem(key('mistakes')) || 0);
+    attemptedMistakes = new Set(JSON.parse(localStorage.getItem(key('attemptedMistakes')) || "[]"));
     document.getElementById("score").textContent = score;
     document.getElementById("mistakes").textContent = mistakes;
   }
@@ -481,9 +472,10 @@ function loadState() {
   while(flatList.length) {
     gameState.push(flatList.splice(0, COLS));
   }
-  
-  // Save the (potentially reflowed) state immediately
-  localStorage.setItem('gameState', JSON.stringify(gameState));
+
+  const id = new URLSearchParams(window.location.search).get("id");
+  const key = (k) => `puzzle_${id}_${k}`;
+  localStorage.setItem(key('gameState'), JSON.stringify(gameState));
   renderBoard();
 }
 
