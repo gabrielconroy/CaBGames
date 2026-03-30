@@ -719,15 +719,19 @@ function startDotDance(){
 	console.log("tile:", tile.textContent.trim().slice(0, 15), "| raw color:", color);
     if(!color || color === "rgba(0, 0, 0, 0)" || color === "transparent") color = "#888";
 
-    // Brighten for dark background
-    const tmp = document.createElement("canvas");
-    tmp.width = tmp.height = 1;
-    const tctx = tmp.getContext("2d");
-    tctx.fillStyle = color;
-    tctx.fillRect(0, 0, 1, 1);
-    const [r, g, b] = tctx.getImageData(0, 0, 1, 1).data;
-    const brighten = (v) => Math.min(255, Math.round(v * 1.4 + 30));
-    const brightColor = `rgb(${brighten(r)}, ${brighten(g)}, ${brighten(b)})`;
+    
+    // Make colours vivid for dark background - boost saturation, keep brightness
+const tmp = document.createElement("canvas");
+tmp.width = tmp.height = 1;
+const tctx = tmp.getContext("2d");
+tctx.fillStyle = color;
+tctx.fillRect(0, 0, 1, 1);
+let [r, g, b] = tctx.getImageData(0, 0, 1, 1).data;
+
+// Find the dominant channel and boost contrast between channels
+const avg = (r + g + b) / 3;
+const saturate = (v) => Math.min(255, Math.max(0, Math.round(avg + (v - avg) * 2.5)));
+const brightColor = `rgb(${saturate(r)}, ${saturate(g)}, ${saturate(b)})`;
 
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
