@@ -716,6 +716,7 @@ function startDotDance(){
   tiles.forEach(tile => {
     const rect = tile.getBoundingClientRect();
     let color = getComputedStyle(tile).backgroundColor;
+	console.log("tile:", tile.textContent.trim().slice(0, 15), "| raw color:", color);
     if(!color || color === "rgba(0, 0, 0, 0)" || color === "transparent") color = "#888";
 
     // Brighten for dark background
