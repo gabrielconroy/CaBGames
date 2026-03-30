@@ -705,15 +705,16 @@ function startDotDance(){
   const centerX = canvas.width / 2;
   const centerY = canvas.height / 2;
 
-  const N = Object.keys(cats).length; // number of categories = M for square puzzles
+  const N = Object.keys(cats).length;
   const lissRadius = Math.min(canvas.width, canvas.height) * 0.35;
   const dots = [];
 
   let tiles = document.querySelectorAll(".bigbut:disabled");
+  if(tiles.length === 0) tiles = document.querySelectorAll(".bigbut");
+
   tiles.forEach(tile => {
     const rect = tile.getBoundingClientRect();
 
-    // Generate vivid colour from category name for dark background
     const category = tile.querySelector("b")
       ? tile.querySelector("b").textContent
       : tile.textContent.trim();
@@ -739,22 +740,6 @@ function startDotDance(){
     }
   });
 
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-
-    for(let j = 0; j < N; j++){
-      dots.push({
-        x: cx + (Math.random() - 0.5) * rect.width,
-        y: cy + (Math.random() - 0.5) * rect.height,
-        vx: (Math.random() - 0.5) * 3,
-        vy: (Math.random() - 0.5) * 3,
-        color: brightColor,
-        group: dots.length % N  // which colour group (0 to N-1)
-      });
-    }
-  });
-
-  // Fade background
   const fade = document.getElementById("win-fade");
   fade.style.opacity = "0.92";
   document.getElementById("board").style.visibility = "hidden";
@@ -766,7 +751,6 @@ function startDotDance(){
 
   function advanceStage(){
     stage = (stage + 1) % 5;
-    // No position reset — dots flow from wherever they are
     setTimeout(advanceStage, STAGE_DURATION);
   }
   setTimeout(advanceStage, STAGE_DURATION);
@@ -781,12 +765,10 @@ function startDotDance(){
     dots.forEach((d, i) => {
 
       if(stage === 0){
-        // Scatter — just drift from current position, bounce off edges
         d.x += d.vx;
         d.y += d.vy;
         d.vx *= 0.998;
         d.vy *= 0.998;
-        // Nudge if nearly stopped
         if(Math.abs(d.vx) < 0.3) d.vx += (Math.random() - 0.5) * 0.5;
         if(Math.abs(d.vy) < 0.3) d.vy += (Math.random() - 0.5) * 0.5;
         if(d.x < 0 || d.x > canvas.width)  d.vx *= -1;
@@ -794,7 +776,6 @@ function startDotDance(){
       }
 
       else if(stage === 1){
-        // Grid
         const col = i % N;
         const row = Math.floor(i / N);
         const spacing = Math.min(canvas.width, canvas.height) / (N + 2);
@@ -803,13 +784,11 @@ function startDotDance(){
         const targetY = centerY + (row - (totalRows - 1) / 2) * spacing;
         d.x += (targetX - d.x) * EASE;
         d.y += (targetY - d.y) * EASE;
-        // Carry momentum into next stage
         d.vx = (targetX - d.x) * EASE;
         d.vy = (targetY - d.y) * EASE;
       }
 
       else if(stage === 2){
-        // Spiral ring
         const angle = (i / dots.length) * Math.PI * 2 + time * 0.3;
         const radius = Math.min(canvas.width, canvas.height) * 0.3;
         const targetX = centerX + Math.cos(angle) * radius;
@@ -821,7 +800,6 @@ function startDotDance(){
       }
 
       else if(stage === 3){
-        // Lissajous N : N+1
         const t = (i / dots.length) * Math.PI * 2 + time * 0.2;
         const targetX = centerX + lissRadius * Math.sin(N * t + time * 0.15);
         const targetY = centerY + lissRadius * Math.sin((N + 1) * t);
@@ -832,7 +810,6 @@ function startDotDance(){
       }
 
       else if(stage === 4){
-        // Lissajous N : N+2
         const t = (i / dots.length) * Math.PI * 2 + time * 0.2;
         const targetX = centerX + lissRadius * Math.sin(N * t + time * 0.15);
         const targetY = centerY + lissRadius * Math.sin((N + 2) * t);
