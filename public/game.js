@@ -691,10 +691,10 @@ function returnToBoard(){
 }
 
 function startDotDance(){
-  console.log("Tiles found:", document.querySelectorAll(".bigbut").length, "Disabled:", document.querySelectorAll(".bigbut:disabled").length);
-
-  // Hide tooltip by removing any hovered tile focus
-  document.activeElement?.blur();
+  document.getElementById("return-to-board").style.display = "block";
+  setTimeout(() => {
+    document.getElementById("return-to-board").style.opacity = "1";
+  }, 50);
 
   const canvas = document.getElementById("dotdance");
   const ctx = canvas.getContext("2d");
@@ -710,13 +710,13 @@ function startDotDance(){
   let tiles = document.querySelectorAll(".bigbut:disabled");
   if(tiles.length === 0) tiles = document.querySelectorAll(".bigbut");
 
-  // Capture tile colors — brighten for dark background
+  // Capture tile colours and positions BEFORE hiding board
   tiles.forEach(tile => {
     const rect = tile.getBoundingClientRect();
     let color = getComputedStyle(tile).backgroundColor;
     if(!color || color === "rgba(0, 0, 0, 0)" || color === "transparent") color = "#888";
 
-    // Parse and brighten the color
+    // Brighten colour for dark background
     const tmp = document.createElement("canvas");
     tmp.width = tmp.height = 1;
     const tctx = tmp.getContext("2d");
@@ -728,109 +728,109 @@ function startDotDance(){
 
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
+
     for(let j = 0; j < N; j++){
       dots.push({
         x: cx + (Math.random() - 0.5) * rect.width,
         y: cy + (Math.random() - 0.5) * rect.height,
         originX: cx,
         originY: cy,
-        vx: (Math.random() - 0.5) * 6,
-        vy: (Math.random() - 0.5) * 6,
+        vx: (Math.random() - 0.5) * 3,
+        vy: (Math.random() - 0.5) * 3,
         color: brightColor
       });
     }
   });
 
-  // Fade background to near-black
+  // Fade background
   const fade = document.getElementById("win-fade");
   fade.style.opacity = "0.92";
 
-  // Hide board, show return button with fade-in
-  document.getElementById("board").style.visibility = "hidden";
-  const btn = document.getElementById("return-to-board");
-  btn.style.display = "block";
-  setTimeout(() => btn.style.opacity = "1", 50);
-
-  // rest of function unchanged from let stage = 0 onwards...
-
   document.getElementById("board").style.visibility = "hidden";
 
-  
-  
   let stage = 0;
   let time = 0;
+  const STAGE_DURATION = 3000;   // ms per stage
+  const EASE = 0.04;             // slower easing for smoother transitions
 
   function advanceStage(){
     stage = (stage + 1) % 5;
 
     if(stage === 0){
+      // Reset to origin for scatter
       dots.forEach(d => {
-        d.x = d.originX;
-        d.y = d.originY;
-        d.vx = (Math.random() - 0.5) * 6;
-        d.vy = (Math.random() - 0.5) * 6;
+        d.x = d.originX + (Math.random() - 0.5) * 20;
+        d.y = d.originY + (Math.random() - 0.5) * 20;
+        d.vx = (Math.random() - 0.5) * 3;
+        d.vy = (Math.random() - 0.5) * 3;
       });
     }
 
-    setTimeout(advanceStage, 2000);
+    setTimeout(advanceStage, STAGE_DURATION);
   }
-  setTimeout(advanceStage, 2000);
+  setTimeout(advanceStage, STAGE_DURATION);
 
   function animate(){
     requestAnimationFrame(animate);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    time += 0.02;
+    time += 0.01; // slower time = slower animation = epilepsy safer
+
+    // Gentle pulse: dot radius breathes between 3 and 5
+    const pulse = 4 + Math.sin(time * 1.5) * 1.5;
 
     dots.forEach((d, i) => {
 
       if(stage === 0){
-        // Scatter with bounce
+        // Scatter with soft bounce
         d.x += d.vx;
         d.y += d.vy;
+        d.vx *= 0.995; // gentle friction so dots don't fly forever
+        d.vy *= 0.995;
         if(d.x < 0 || d.x > canvas.width)  d.vx *= -1;
         if(d.y < 0 || d.y > canvas.height) d.vy *= -1;
       }
 
       else if(stage === 1){
-        // Grid
-        const gx = (i % N) - Math.floor(N / 2);
-        const gy = Math.floor(i / N) - Math.floor(N / 2);
-        const targetX = centerX + gx * 24;
-        const targetY = centerY + gy * 24;
-        d.x += (targetX - d.x) * 0.06;
-        d.y += (targetY - d.y) * 0.06;
+        // Grid — N columns × N rows
+        const col = i % N;
+        const row = Math.floor(i / N);
+        const spacing = Math.min(canvas.width, canvas.height) / (N + 2);
+        const targetX = centerX + (col - (N - 1) / 2) * spacing;
+        const targetY = centerY + (row - (Math.floor(dots.length / N) - 1) / 2) * spacing;
+        d.x += (targetX - d.x) * EASE;
+        d.y += (targetY - d.y) * EASE;
       }
 
       else if(stage === 2){
-        // Spiral ring
-        const angle = i * (2 * Math.PI / dots.length) + time * 0.7;
-        const radius = 120 + i * 0.25;
+        // Spiral ring — evenly spaced, slow rotation
+        const angle = (i / dots.length) * Math.PI * 2 + time * 0.3;
+        const radius = Math.min(canvas.width, canvas.height) * 0.3;
         const targetX = centerX + Math.cos(angle) * radius;
         const targetY = centerY + Math.sin(angle) * radius;
-        d.x += (targetX - d.x) * 0.05;
-        d.y += (targetY - d.y) * 0.05;
+        d.x += (targetX - d.x) * EASE;
+        d.y += (targetY - d.y) * EASE;
       }
 
       else if(stage === 3){
         // Lissajous N : N+1
-        const t = (i / dots.length) * 2 * Math.PI + time * 0.3;
-        const targetX = centerX + lissRadius * Math.sin(N * t + time * 0.2);
+        const t = (i / dots.length) * Math.PI * 2 + time * 0.2;
+        const targetX = centerX + lissRadius * Math.sin(N * t + time * 0.15);
         const targetY = centerY + lissRadius * Math.sin((N + 1) * t);
-        d.x += (targetX - d.x) * 0.05;
-        d.y += (targetY - d.y) * 0.05;
+        d.x += (targetX - d.x) * EASE;
+        d.y += (targetY - d.y) * EASE;
       }
 
       else if(stage === 4){
         // Lissajous N : N+2
-        const t = (i / dots.length) * 2 * Math.PI + time * 0.3;
-        const targetX = centerX + lissRadius * Math.sin(N * t + time * 0.2);
+        const t = (i / dots.length) * Math.PI * 2 + time * 0.2;
+        const targetX = centerX + lissRadius * Math.sin(N * t + time * 0.15);
         const targetY = centerY + lissRadius * Math.sin((N + 2) * t);
-        d.x += (targetX - d.x) * 0.05;
-        d.y += (targetY - d.y) * 0.05;
+        d.x += (targetX - d.x) * EASE;
+        d.y += (targetY - d.y) * EASE;
       }
 
       ctx.beginPath();
-      ctx.arc(d.x, d.y, 4, 0, Math.PI * 2);
+      ctx.arc(d.x, d.y, pulse, 0, Math.PI * 2);
       ctx.fillStyle = d.color;
       ctx.fill();
     });
