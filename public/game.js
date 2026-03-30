@@ -829,8 +829,11 @@ function startDotDance(){
   }
   setTimeout(advanceStage, STAGE_DURATIONS[0]);
 
-  function animate(){
+  let lastFrame = 0;
+  function animate(timestamp){
     requestAnimationFrame(animate);
+    if(timestamp - lastFrame < 16.7) return;
+    lastFrame = timestamp;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     time += 0.01;
 
@@ -915,12 +918,20 @@ function startDotDance(){
         d.vy = (targetY - d.y) * 0.02;
       }
 
-      ctx.beginPath();
-      ctx.arc(d.x, d.y, pulse, 0, Math.PI * 2);
-      ctx.fillStyle = d.color;
-      ctx.fill();
+      if(!byColor[d.color]) byColor[d.color] = [];
+      byColor[d.color].push({ x: d.x, y: d.y });
     });
+
+    for(const color in byColor){
+      ctx.beginPath();
+      ctx.fillStyle = color;
+      byColor[color].forEach(p => {
+        ctx.moveTo(p.x + pulse, p.y);
+        ctx.arc(p.x, p.y, pulse, 0, Math.PI * 2);
+      });
+      ctx.fill();
+    }
   }
 
-  animate();
+  requestAnimationFrame(animate);
 }
