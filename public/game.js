@@ -815,18 +815,17 @@ function startDotDance(){
   let stage = 0;
   let textPhase = 0;
   let time = 0;
-  const STAGE_DURATION = 3000;
-  const EASE = 0.04;
+  const STAGE_DURATIONS = [3000, 3000, 3000, 3000, 6000, 3000]; // stage 4 (text) gets 6s
 
   function advanceStage(){
     stage = (stage + 1) % totalStages;
     if(stage === 4){
       textPhase = 0;
-      setTimeout(() => { textPhase = 1; }, 1500);
+      setTimeout(() => { textPhase = 1; }, 2500); // switch to dot count after 2.5s
     }
-    setTimeout(advanceStage, STAGE_DURATION);
+    setTimeout(advanceStage, STAGE_DURATIONS[stage] || 3000);
   }
-  setTimeout(advanceStage, STAGE_DURATION);
+  setTimeout(advanceStage, STAGE_DURATIONS[0]);
 
   function animate(){
     requestAnimationFrame(animate);
