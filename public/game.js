@@ -152,6 +152,7 @@ function goHome() {
 }
 
 function sortMerged(){
+	deselect();
 
   // Flatten the board
   let flat = gameState.flat();
@@ -318,20 +319,19 @@ function handleButtonClick(r, c, e) {
       targetC--;
     }
 
-    if (!selectionHeld) {
-      deselect();
-    } else {
-      selectedIdx = { r: targetR, c: targetC };
-
-      const mergedData = gameState[targetR][targetC];
-      const displayText = mergedData.words.length === 1
-        ? mergedData.words[0]
-        : mergedData.words.slice(0, 2).join(", ") + "...";
-
-      updateSelectedUI(displayText);
-      document.getElementById("deselect").disabled = false;
-      renderBoard();
-    }
+    const mergedSize = gameState[targetR][targetC].words.length;
+if (!selectionHeld || mergedSize === M) {
+  deselect();
+} else {
+  selectedIdx = { r: targetR, c: targetC };
+  const mergedData = gameState[targetR][targetC];
+  const displayText = mergedData.words.length === 1
+    ? mergedData.words[0]
+    : mergedData.words.slice(0, 2).join(", ") + "...";
+  updateSelectedUI(displayText);
+  document.getElementById("deselect").disabled = false;
+  renderBoard();
+}
 
     saveState();
 
@@ -499,6 +499,7 @@ function initScrollListener() {
 }
 
 function triggerWinState() {
+	hideTooltip();
 
   // Show animated banner
   const banner = document.getElementById("win-banner");
