@@ -710,31 +710,34 @@ function startDotDance(){
   const dots = [];
 
   let tiles = document.querySelectorAll(".bigbut:disabled");
-  if(tiles.length === 0) tiles = document.querySelectorAll(".bigbut");
-
-  // One colour per tile (category), N dots per tile
   tiles.forEach(tile => {
     const rect = tile.getBoundingClientRect();
-    let color = getComputedStyle(tile).backgroundColor;
-	console.log("tile:", tile.textContent.trim().slice(0, 15), "| raw color:", color);
-    if(!color || color === "rgba(0, 0, 0, 0)" || color === "transparent") color = "#888";
 
-    
     // Generate vivid colour from category name for dark background
-const category = tile.querySelector("b")
-  ? tile.querySelector("b").textContent
-  : tile.textContent.trim();
-let hash = 0;
-for(let i = 0; i < category.length; i++){
-  hash = category.charCodeAt(i) + ((hash << 5) - hash);
-}
-const hue = Math.abs(hash) % 360;
-const brightColor = `hsl(${hue}, 90%, 60%)`;
+    const category = tile.querySelector("b")
+      ? tile.querySelector("b").textContent
+      : tile.textContent.trim();
+    let hash = 0;
+    for(let i = 0; i < category.length; i++){
+      hash = category.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const hue = Math.abs(hash) % 360;
+    const brightColor = `hsl(${hue}, 90%, 60%)`;
 
-// Find the dominant channel and boost contrast between channels
-const avg = (r + g + b) / 3;
-const saturate = (v) => Math.min(255, Math.max(0, Math.round(avg + (v - avg) * 2.5)));
-const brightColor = `rgb(${saturate(r)}, ${saturate(g)}, ${saturate(b)})`;
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+
+    for(let j = 0; j < N; j++){
+      dots.push({
+        x: cx + (Math.random() - 0.5) * rect.width,
+        y: cy + (Math.random() - 0.5) * rect.height,
+        vx: (Math.random() - 0.5) * 3,
+        vy: (Math.random() - 0.5) * 3,
+        color: brightColor,
+        group: dots.length % N
+      });
+    }
+  });
 
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
