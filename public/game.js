@@ -815,7 +815,7 @@ function startDotDance(){
   let stage = 0;
   let textPhase = 0;
   let time = 0;
-  const STAGE_DURATIONS = [3000, 3000, 3000, 3000, 6000, 3000]; // stage 4 (text) gets 6s
+  const STAGE_DURATIONS = [3000, 4000, 3000, 3000, 6000, 3000];
 
   function advanceStage(){
     stage = (stage + 1) % totalStages;
