@@ -775,7 +775,6 @@ function startDotDance(){
 
   tiles.forEach(tile => {
     const rect = tile.getBoundingClientRect();
-
     const category = tile.querySelector("b")
       ? tile.querySelector("b").textContent
       : tile.textContent.trim();
@@ -785,10 +784,8 @@ function startDotDance(){
     }
     const hue = Math.abs(hash) % 360;
     const brightColor = `hsl(${hue}, 90%, 60%)`;
-
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
-
     for(let j = 0; j < N; j++){
       dots.push({
         x: cx + (Math.random() - 0.5) * rect.width,
@@ -805,19 +802,31 @@ function startDotDance(){
   fade.style.opacity = "0.92";
   document.getElementById("board").style.visibility = "hidden";
 
+  const useTextStage = dots.length >= 25;
+  const totalStages = useTextStage ? 6 : 5;
+
+  let textPositions1 = [];
+  let textPositions2 = [];
+  if(useTextStage){
+    textPositions1 = sampleTextPositions(`${N}×${N}`, dots.length, canvas.width, canvas.height);
+    textPositions2 = sampleTextPositions(`${dots.length}`, dots.length, canvas.width, canvas.height);
+  }
+
   let stage = 0;
+  let textPhase = 0;
   let time = 0;
   const STAGE_DURATION = 3000;
   const EASE = 0.04;
 
   function advanceStage(){
-  stage = (stage + 1) % totalStages;
-  if(stage === 4){
-    textPhase = 0;
-    setTimeout(() => { textPhase = 1; }, 1500);
+    stage = (stage + 1) % totalStages;
+    if(stage === 4){
+      textPhase = 0;
+      setTimeout(() => { textPhase = 1; }, 1500);
+    }
+    setTimeout(advanceStage, STAGE_DURATION);
   }
   setTimeout(advanceStage, STAGE_DURATION);
-
 
   function animate(){
     requestAnimationFrame(animate);
@@ -842,14 +851,14 @@ function startDotDance(){
       else if(stage === 1){
         const col = i % N;
         const row = Math.floor(i / N);
-        const spacing = Math.min(canvas.width, canvas.height) / (N + 2);
+        const spacing = Math.min(canvas.width, canvas.height) / (N + 1);
         const totalRows = Math.ceil(dots.length / N);
         const targetX = centerX + (col - (N - 1) / 2) * spacing;
         const targetY = centerY + (row - (totalRows - 1) / 2) * spacing;
-        d.x += (targetX - d.x) * EASE;
-        d.y += (targetY - d.y) * EASE;
-        d.vx = (targetX - d.x) * EASE;
-        d.vy = (targetY - d.y) * EASE;
+        d.x += (targetX - d.x) * 0.02;
+        d.y += (targetY - d.y) * 0.02;
+        d.vx = (targetX - d.x) * 0.02;
+        d.vy = (targetY - d.y) * 0.02;
       }
 
       else if(stage === 2){
@@ -864,37 +873,35 @@ function startDotDance(){
       }
 
       else if(stage === 3){
-  const t = (i / dots.length) * Math.PI * 2 + time * 0.2;
-  const targetX = centerX + lissRadius * Math.sin(N * t + time * 0.15);
-  const targetY = centerY + lissRadius * Math.sin((N + 1) * t + Math.PI / 4);
-  d.x += (targetX - d.x) * 0.02;
-  d.y += (targetY - d.y) * 0.02;
-  d.vx = (targetX - d.x) * 0.02;
-  d.vy = (targetY - d.y) * 0.02;
-}
+        const t = (i / dots.length) * Math.PI * 2 + time * 0.2;
+        const targetX = centerX + lissRadius * Math.sin(N * t + time * 0.15);
+        const targetY = centerY + lissRadius * Math.sin((N + 1) * t + Math.PI / 4);
+        d.x += (targetX - d.x) * 0.02;
+        d.y += (targetY - d.y) * 0.02;
+        d.vx = (targetX - d.x) * 0.02;
+        d.vy = (targetY - d.y) * 0.02;
+      }
 
-else if(stage === 4 && useTextStage){
-  const positions = textPhase === 0 ? textPositions1 : textPositions2;
-  const target = positions[i % positions.length];
-  if(target){
-    d.x += (target.x - d.x) * 0.03;
-    d.y += (target.y - d.y) * 0.03;
-    d.vx = (target.x - d.x) * 0.03;
-    d.vy = (target.y - d.y) * 0.03;
-  }
-}
+      else if(stage === 4 && useTextStage){
+        const positions = textPhase === 0 ? textPositions1 : textPositions2;
+        const target = positions[i % positions.length];
+        if(target){
+          d.x += (target.x - d.x) * 0.03;
+          d.y += (target.y - d.y) * 0.03;
+          d.vx = (target.x - d.x) * 0.03;
+          d.vy = (target.y - d.y) * 0.03;
+        }
+      }
 
-else if(stage === 5){
-  const t = (i / dots.length) * Math.PI * 2 + time * 0.2;
-  const targetX = centerX + lissRadius * Math.sin(N * t + time * 0.15);
-  const targetY = centerY + lissRadius * Math.sin((N + 2) * t + Math.PI / 4);
-  d.x += (targetX - d.x) * 0.02;
-  d.y += (targetY - d.y) * 0.02;
-  d.vx = (targetX - d.x) * 0.02;
-  d.vy = (targetY - d.y) * 0.02;
-}
-
-     
+      else if(stage === 5){
+        const t = (i / dots.length) * Math.PI * 2 + time * 0.2;
+        const targetX = centerX + lissRadius * Math.sin(N * t + time * 0.15);
+        const targetY = centerY + lissRadius * Math.sin((N + 2) * t + Math.PI / 4);
+        d.x += (targetX - d.x) * 0.02;
+        d.y += (targetY - d.y) * 0.02;
+        d.vx = (targetX - d.x) * 0.02;
+        d.vy = (targetY - d.y) * 0.02;
+      }
 
       ctx.beginPath();
       ctx.arc(d.x, d.y, pulse, 0, Math.PI * 2);
