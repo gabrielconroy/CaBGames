@@ -720,13 +720,16 @@ function startDotDance(){
     if(!color || color === "rgba(0, 0, 0, 0)" || color === "transparent") color = "#888";
 
     
-    // Make colours vivid for dark background - boost saturation, keep brightness
-const tmp = document.createElement("canvas");
-tmp.width = tmp.height = 1;
-const tctx = tmp.getContext("2d");
-tctx.fillStyle = color;
-tctx.fillRect(0, 0, 1, 1);
-let [r, g, b] = tctx.getImageData(0, 0, 1, 1).data;
+    // Generate vivid colour from category name for dark background
+const category = tile.querySelector("b")
+  ? tile.querySelector("b").textContent
+  : tile.textContent.trim();
+let hash = 0;
+for(let i = 0; i < category.length; i++){
+  hash = category.charCodeAt(i) + ((hash << 5) - hash);
+}
+const hue = Math.abs(hash) % 360;
+const brightColor = `hsl(${hue}, 90%, 60%)`;
 
 // Find the dominant channel and boost contrast between channels
 const avg = (r + g + b) / 3;
