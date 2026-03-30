@@ -829,12 +829,17 @@ function startDotDance(){
   }
   setTimeout(advanceStage, STAGE_DURATIONS[0]);
 
-  function animate(){
+  let lastFrame = 0;
+  function animate(timestamp){
     requestAnimationFrame(animate);
+    if(timestamp - lastFrame < 16.7) return;
+    lastFrame = timestamp;
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     time += 0.01;
 
     const pulse = 4 + Math.sin(time * 1.5) * 1.5;
+    const byColor = {};
 
     dots.forEach((d, i) => {
 
@@ -894,7 +899,6 @@ function startDotDance(){
             d.vy = (target.y - d.y) * 0.03;
           }
         } else {
-          // Small puzzle fallback — second Lissajous
           const t = (i / dots.length) * Math.PI * 2 + time * 0.2;
           const targetX = centerX + lissRadius * Math.sin(N * t + time * 0.15);
           const targetY = centerY + lissRadius * Math.sin((N + 2) * t + Math.PI / 4);
@@ -915,12 +919,22 @@ function startDotDance(){
         d.vy = (targetY - d.y) * 0.02;
       }
 
-      ctx.beginPath();
-      ctx.arc(d.x, d.y, pulse, 0, Math.PI * 2);
-      ctx.fillStyle = d.color;
-      ctx.fill();
+      // Batch by colour
+      if(!byColor[d.color]) byColor[d.color] = [];
+      byColor[d.color].push({ x: d.x, y: d.y });
     });
+
+    // One path per colour group
+    for(const color in byColor){
+      ctx.beginPath();
+      ctx.fillStyle = color;
+      byColor[color].forEach(p => {
+        ctx.moveTo(p.x + pulse, p.y);
+        ctx.arc(p.x, p.y, pulse, 0, Math.PI * 2);
+      });
+      ctx.fill();
+    }
   }
 
-  animate();
+  requestAnimationFrame(animate);
 }
