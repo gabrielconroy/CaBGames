@@ -473,9 +473,7 @@ function loadState() {
     gameState.push(flatList.splice(0, COLS));
   }
 
-  const id = new URLSearchParams(window.location.search).get("id");
-  const key = (k) => `puzzle_${id}_${k}`;
-  localStorage.setItem(key('gameState'), JSON.stringify(gameState));
+    localStorage.setItem(key('gameState'), JSON.stringify(gameState));
   renderBoard();
 }
 
