@@ -15,13 +15,17 @@
 
   <header>
   <div class="game-stats">
-    <span id="howto"></span>
-    <span class="stat-item">Score: <span id="score">0</span></span>
-    <span class="stat-item">Mistakes: <span id="mistakes">0</span></span>
-    <div class="selected-display">Selected: <span id="selected">-</span></div>
-    <div class="header-buttons">
+    <div class="stats-group">
+      <span class="stat-item">⭐ <strong><span id="score">0</span></strong></span>
+      <span class="stat-divider">|</span>
+      <span class="stat-item">❌ <strong><span id="mistakes">0</span></strong></span>
+    </div>
+    <div class="centre-group">
       <button id="deselect" type="button" onclick="deselect()" disabled>Deselect</button>
+      <div class="selected-display">Selected: <span id="selected">-</span></div>
       <button type="button" onclick="sortMerged()">Sort Merged</button>
+    </div>
+    <div class="header-buttons">
       <button type="button" onclick="goHome()">Home</button>
       <button id="reset-btn" type="button" onclick="confirmReset()">Reset</button>
     </div>
