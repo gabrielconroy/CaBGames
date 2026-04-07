@@ -48,10 +48,11 @@ header button{
 }
 
 #board{
-  height:calc(100vh - 68px);
-  overflow:auto;
-  padding:14px;
-  background:#f6f8fb;
+  flex: 1;
+  height: 100%;
+  overflow: auto;
+  padding: 14px;
+  background: #f6f8fb;
 }
 
 table{
@@ -67,6 +68,67 @@ td{
 
 button{
   font:inherit;
+}
+
+/* Desktop layout with left commands panel */
+.game-layout{
+  display: flex;
+  height: calc(100vh - 54px);
+}
+
+.commands-panel{
+  width: 200px;
+  flex-shrink: 0;
+  padding: 20px 16px;
+  background: #f8fafc;
+  border-right: 1px solid var(--border);
+  text-align: left;
+  overflow-y: auto;
+}
+
+.commands-panel h3{
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin: 0 0 14px 0;
+}
+
+.commands-panel ul{
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.commands-panel li{
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+kbd{
+  display: inline-block;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-bottom: 2px solid #9ca3af;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 11px;
+  font-family: inherit;
+  color: #374151;
+  margin-bottom: 2px;
+}
+
+@media (max-width: 600px){
+  .commands-panel{
+    display: none;
+  }
+  .game-layout{
+    height: calc(100vh - 44px);
+  }
 }
 
 .bigbut{
