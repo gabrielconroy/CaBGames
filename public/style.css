@@ -30,21 +30,74 @@ header{
   z-index:20;
   background:var(--panel);
   border-bottom:1px solid var(--border);
-  padding:6px 10px;
+  padding:9px 16px;
+  min-height:54px;
 }
 
 .game-stats{
   display:flex;
-  gap:10px;
+  gap:12px;
   justify-content:center;
   align-items:center;
   flex-wrap:wrap;
   font-size:14px;
+  width:100%;
 }
 
-header button{
+.stat-item{
+  font-size:14px;
+  color:var(--text);
+}
+
+.selected-display{
+  background:#f0f4ff;
+  border:1px solid #c7d4f5;
+  border-radius:6px;
+  padding:4px 12px;
+  font-size:14px;
+  color:var(--accent);
+  font-weight:500;
+  min-width:140px;
+  text-align:center;
+}
+
+.header-buttons{
+  display:flex;
+  gap:6px;
+  align-items:center;
+  margin-left:auto;
+}
+
+.header-buttons button{
   font-size:13px;
-  padding:3px 8px;
+  padding:5px 12px;
+  border-radius:6px;
+  border:1px solid var(--border);
+  background:white;
+  color:var(--text);
+  cursor:pointer;
+  transition:background 0.15s, box-shadow 0.15s;
+  font-family:inherit;
+}
+
+.header-buttons button:hover{
+  background:var(--hover);
+  box-shadow:0 1px 4px rgba(0,0,0,0.1);
+}
+
+.header-buttons button:disabled{
+  opacity:0.4;
+  cursor:default;
+}
+
+#reset-btn{
+  background:#fff0f0;
+  border-color:#fca5a5;
+  color:#b91c1c;
+}
+
+#reset-btn:hover{
+  background:#fee2e2;
 }
 
 #board{
@@ -363,26 +416,18 @@ kbd{
     padding:4px 6px;
   }
 
+  .header-buttons button{
+    font-size:11px;
+    padding:3px 7px;
+  }
+  .selected-display{
+    font-size:12px;
+    padding:3px 8px;
+    min-width:100px;
+  }
   .game-stats{
     font-size:12px;
     gap:6px;
-  }
-
-  header button{
-    font-size:11px;
-    padding:2px 6px;
-  }
-
-}
-
-  .game-stats{
-    font-size:12px;
-    gap:6px;
-  }
-
-  header button{
-    font-size:11px;
-    padding:2px 6px;
   }
 
 }
