@@ -326,22 +326,41 @@ function renderBoard() {
       const needsTooltip = data.words.length > 1 || textContent.length > 90;
 
       if (needsTooltip) {
-        btn.addEventListener("mouseenter", e => {
-          showTooltip(textContent, e.clientX, e.clientY);
-        });
+  if(window.innerWidth >= 768){
+    btn.addEventListener("mouseenter", e => {
+      showTooltip(textContent, e.clientX, e.clientY);
+    });
+    btn.addEventListener("mousemove", e => {
+      moveTooltip(e.clientX, e.clientY);
+    });
+    btn.addEventListener("mouseleave", hideTooltip);
+  } else {
+    let pressTimer = null;
+    let didLongPress = false;
 
-        btn.addEventListener("mousemove", e => {
-          moveTooltip(e.clientX, e.clientY);
-        });
+    btn.addEventListener("touchstart", e => {
+      didLongPress = false;
+      pressTimer = setTimeout(() => {
+        didLongPress = true;
+        showTooltip(textContent, e.touches[0].clientX, e.touches[0].clientY);
+      }, 600);
+    }, { passive: true });
 
-        btn.addEventListener("mouseleave", hideTooltip);
-
-        btn.addEventListener("touchstart", e => {
-          showTooltip(textContent, e.touches[0].clientX, e.touches[0].clientY);
-        });
-
-        btn.addEventListener("touchend", hideTooltip);
+    btn.addEventListener("touchend", e => {
+      clearTimeout(pressTimer);
+      if(didLongPress){
+        e.preventDefault();
+        e.stopPropagation();
+        hideTooltip();
       }
+    });
+
+    btn.addEventListener("touchmove", () => {
+      clearTimeout(pressTimer);
+      hideTooltip();
+    });
+  }
+}
 
       td.appendChild(btn);
       tr.appendChild(td);
