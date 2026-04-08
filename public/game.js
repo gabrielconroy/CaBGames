@@ -434,25 +434,24 @@ if (!selectionHeld || mergedSize === M) {
 
 function confirmReset() {
   if (confirm("Are you sure you want to reset the entire board? All progress will be lost!")) {
-    // 1. Clear storage
-    localStorage.removeItem('gameState');
-    localStorage.removeItem('score');
-    localStorage.removeItem('mistakes');
-    localStorage.removeItem('attemptedMistakes');
+    const id = new URLSearchParams(window.location.search).get("id");
+    const key = (k) => `puzzle_${id}_${k}`;
 
-    // 2. Reset local variables
+    localStorage.removeItem(key('gameState'));
+    localStorage.removeItem(key('score'));
+    localStorage.removeItem(key('mistakes'));
+    localStorage.removeItem(key('attemptedMistakes'));
+
     score = 0;
     mistakes = 0;
     attemptedMistakes = new Set();
     selectedIdx = null;
 
-    // 3. Update UI
     document.getElementById("score").textContent = "0";
     document.getElementById("mistakes").textContent = "0";
     updateSelectedUI("");
 
-    // 4. Re-initialize the 2D game state
-    loadState(); 
+    loadState();
   }
 }
 
