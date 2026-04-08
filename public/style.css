@@ -215,18 +215,15 @@ kbd{
 }
 
 @media (max-width:600px){
-
   #board{
     padding:8px;
     overflow-x:auto;
   }
-
   table{
     border-spacing:4px;
     margin:0 auto;
     width:calc((84px * 4) + (4px * 3));
   }
-
   .bigbut{
     width:84px;
     height:70px;
@@ -234,55 +231,57 @@ kbd{
     padding:4px;
     line-height:1.05;
   }
-
   header{
     min-height:auto;
     padding:4px 8px;
   }
-
   .game-stats{
+    display:grid;
+    grid-template-columns:1fr auto;
+    grid-template-rows:auto auto;
     height:auto;
-    flex-wrap:wrap;
-    padding:6px 0;
-    gap:6px;
+    gap:4px;
+    padding:4px 0;
+    flex-wrap:unset;
   }
-
   .stats-group{
+    grid-column:1;
+    grid-row:1;
     border-right:none;
     padding:0;
     min-width:auto;
+    justify-content:flex-start;
   }
-
   .header-buttons{
+    grid-column:2;
+    grid-row:1;
     border-left:none;
     padding:0;
+    justify-content:flex-end;
   }
-
   .centre-group{
+    grid-column:1 / -1;
+    grid-row:2;
     gap:6px;
-    padding:0 8px;
+    padding:0;
+    justify-content:center;
   }
-
   .selected-display{
     font-size:12px;
     padding:3px 8px;
     min-width:80px;
   }
-
   .header-buttons button,
   .centre-group button{
     font-size:11px;
     padding:3px 7px;
   }
-
   .commands-panel{
     display:none;
   }
-
   .game-layout{
     height:calc(100vh - 44px);
   }
-
 }
 
 .bigbut{
