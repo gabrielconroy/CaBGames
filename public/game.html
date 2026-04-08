@@ -14,19 +14,38 @@
   <div id="crt-overlay"></div>
 
   <header>
-    <div class="game-stats">
-  <span id="howto"></span>
-  <span>Score: <span id="score">0</span></span>
-  <span>Mistakes: <span id="mistakes">0</span></span>
-  <span>Selected: <span id="selected">-</span></span>
-  <button id="deselect" type="button" onclick="deselect()" disabled>Deselect</button>
-  <button id="reset-btn" type="button" onclick="confirmReset()">Reset</button>
-  <button type="button" onclick="sortMerged()">Sort Merged</button>
-  <button type="button" onclick="goHome()">Home</button>
+  <div class="game-stats">
+    <div class="stats-group">
+      <span class="stat-item">HITS <strong><span id="score">0</span></strong></span>
+      <span class="stat-divider">|</span>
+      <span class="stat-item">MISSES <strong><span id="mistakes">0</span></strong></span>
+    </div>
+    <div class="centre-group">
+      <button id="deselect" type="button" onclick="deselect()" disabled>Deselect</button>
+      <div class="selected-display">Selected: <span id="selected">-</span></div>
+      <button type="button" onclick="sortMerged()">Sort Merged</button>
+      <button type="button" onclick="shuffleUnmerged()">Shuffle</button>
+    </div>
+    <div class="header-buttons">
+      <button type="button" onclick="goHome()">Home</button>
+      <button id="reset-btn" type="button" onclick="confirmReset()">Reset</button>
+    </div>
   </div>
-  </header>
+</header>
 
+  <div class="game-layout">
+  <aside class="commands-panel" id="commands-panel">
+    <h3>Commands</h3>
+    <ul>
+      <li><kbd>Click</kbd> Select a tile</li>
+      <li><kbd>Click again</kbd> Deselect</li>
+      <li><kbd>Ctrl+Click</kbd> Hold selection after merge</li>
+      <li><kbd>Sort Merged</kbd> Move completed categories to top</li>
+      <li><kbd>Reset</kbd> Restart puzzle</li>
+    </ul>
+  </aside>
   <main id="board"></main>
+</div>
 
   <div id="win-banner">
     <span>Y</span><span>O</span><span>U</span><span>&nbsp;</span>

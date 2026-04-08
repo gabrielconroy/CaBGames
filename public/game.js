@@ -114,14 +114,14 @@ function mobileFontSize(text){
 }
 
 function showTooltip(text, x, y){
-
   const tip = document.getElementById("tile-tooltip");
-
-  tip.textContent = text;
-
+  const isMobile = window.innerWidth < 768;
+  const displayText = isMobile && text.length > 75
+    ? text.slice(0, 57) + "..."
+    : text;
+  tip.textContent = displayText;
   tip.style.left = (x + 12) + "px";
   tip.style.top  = (y + 12) + "px";
-
   tip.classList.add("visible");
 }
 
@@ -145,6 +145,37 @@ function mergeColor(n){
   const saturation = 70 + t * 30;  // slightly stronger saturation
 
   return `hsl(0, ${saturation}%, ${lightness}%)`;
+}
+
+function shuffleUnmerged(){
+  deselect();
+
+  // Separate merged and unmerged
+  const flat = gameState.flat();
+  const merged = flat.filter(t => t.words.length > 1);
+  const unmerged = flat.filter(t => t.words.length === 1);
+
+  // Shuffle all tiles together first
+  const all = [...merged, ...unmerged];
+  shuffleArray(all);
+
+  // Then sort merged to top
+  all.sort((a, b) => {
+    const aMerged = a.words.length > 1;
+    const bMerged = b.words.length > 1;
+    if(aMerged !== bMerged) return bMerged - aMerged;
+    return b.words.length - a.words.length;
+  });
+
+  // Rebuild gameState
+  gameState = [];
+  const copy = [...all];
+  while(copy.length){
+    gameState.push(copy.splice(0, COLS));
+  }
+
+  renderBoard();
+  saveState();
 }
 
 function goHome() {
@@ -183,14 +214,10 @@ function sortMerged(){
 }
 
 function renderBoard() {
-
   const boardDiv = document.getElementById("board");
-
-  // save scroll position
   const scrollX = boardDiv.scrollLeft;
   const scrollY = boardDiv.scrollTop;
-
-  boardDiv.innerHTML = ""; 
+  boardDiv.innerHTML = "";
   const table = document.createElement('table');
   table.id = "the_table";
 
@@ -203,30 +230,23 @@ function renderBoard() {
 
       const textForSizing = data.words.join(" ");
       btn.style.fontSize = mobileFontSize(textForSizing) + "px";
-      
-      // Highlight if selected
+
       if (selectedIdx && selectedIdx.r === rowIndex && selectedIdx.c === colIndex) {
-  if (selectionHeld) {
-    btn.classList.add("selected-held");
-  } else {
-    btn.classList.add("selected-tile");
-  }
-}
+        if (selectionHeld) {
+          btn.classList.add("selected-held");
+        } else {
+          btn.classList.add("selected-tile");
+        }
+      }
 
       if (data.words.length === 1) {
-        // Just one item
         btn.textContent = data.words[0];
       } else if (data.words.length < M) {
-
         let preview = data.words.slice(0,2).join(" • ");
         const suffix = data.words.length > 2 ? "…" : "";
         const count = data.words.length;
-
-        btn.innerHTML =
-          `<b>${preview}${suffix} <span style="color:${mergeColor(count)};font-weight:${count>20?'700':'600'}">[${count}]</span></b>`;
-
+        btn.innerHTML = `<b>${preview}${suffix} <span style="color:${mergeColor(count)};font-weight:${count>20?'700':'600'}">[${count}]</span></b>`;
       } else {
-        // Category complete
         btn.innerHTML = `<b>${data.category}</b>`;
         btn.disabled = true;
         btn.style.background = stringToLightColor(data.category);
@@ -234,26 +254,44 @@ function renderBoard() {
 
       btn.onclick = (e) => handleButtonClick(rowIndex, colIndex, e);
 
-      // Tooltip for merged tiles and long single tiles
       const textContent = data.words.join(" • ");
       const needsTooltip = data.words.length > 1 || textContent.length > 90;
 
       if (needsTooltip) {
-        btn.addEventListener("mouseenter", e => {
-          showTooltip(textContent, e.clientX, e.clientY);
-        });
+        if(window.innerWidth >= 768){
+          btn.addEventListener("mouseenter", e => {
+            showTooltip(textContent, e.clientX, e.clientY);
+          });
+          btn.addEventListener("mousemove", e => {
+            moveTooltip(e.clientX, e.clientY);
+          });
+          btn.addEventListener("mouseleave", hideTooltip);
+        } else {
+          let pressTimer = null;
+          let didLongPress = false;
 
-        btn.addEventListener("mousemove", e => {
-          moveTooltip(e.clientX, e.clientY);
-        });
+          btn.addEventListener("touchstart", e => {
+            didLongPress = false;
+            pressTimer = setTimeout(() => {
+              didLongPress = true;
+              showTooltip(textContent, e.touches[0].clientX, e.touches[0].clientY);
+            }, 600);
+          }, { passive: true });
 
-        btn.addEventListener("mouseleave", hideTooltip);
+          btn.addEventListener("touchend", e => {
+            clearTimeout(pressTimer);
+            if(didLongPress){
+              e.preventDefault();
+              e.stopPropagation();
+              hideTooltip();
+            }
+          });
 
-        btn.addEventListener("touchstart", e => {
-          showTooltip(textContent, e.touches[0].clientX, e.touches[0].clientY);
-        });
-
-        btn.addEventListener("touchend", hideTooltip);
+          btn.addEventListener("touchmove", () => {
+            clearTimeout(pressTimer);
+            hideTooltip();
+          });
+        }
       }
 
       td.appendChild(btn);
@@ -263,14 +301,12 @@ function renderBoard() {
   });
 
   boardDiv.appendChild(table);
-
-  // restore scroll position
   boardDiv.scrollLeft = scrollX;
   boardDiv.scrollTop = scrollY;
 
   if (window.innerWidth > 600) {
-  fitButtonText();
-}
+    fitButtonText();
+  }
 }
 
 
@@ -761,13 +797,20 @@ function startDotDance(){
 
   const canvas = document.getElementById("dotdance");
   const ctx = canvas.getContext("2d");
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  const centerX = canvas.width / 2;
-  const centerY = canvas.height / 2;
+
+  // Respect device pixel ratio but cap for performance
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = window.innerWidth * dpr;
+  canvas.height = window.innerHeight * dpr;
+  ctx.scale(dpr, dpr);
+
+  const canvasW = window.innerWidth;
+  const canvasH = window.innerHeight;
+  const centerX = canvasW / 2;
+  const centerY = canvasH / 2;
 
   const N = Object.keys(cats).length;
-  const lissRadius = Math.min(canvas.width, canvas.height) * 0.35;
+  const lissRadius = Math.min(canvasW, canvasH) * 0.35;
   const dots = [];
 
   let tiles = document.querySelectorAll(".bigbut:disabled");
@@ -798,6 +841,12 @@ function startDotDance(){
     }
   });
 
+  // Cap dot count on mobile
+  const isMobile = window.innerWidth < 768;
+  if(isMobile && dots.length > 100){
+    dots.splice(100);
+  }
+
   const fade = document.getElementById("win-fade");
   fade.style.opacity = "0.92";
   document.getElementById("board").style.visibility = "hidden";
@@ -808,8 +857,8 @@ function startDotDance(){
   let textPositions1 = [];
   let textPositions2 = [];
   if(useTextStage){
-    textPositions1 = sampleTextPositions(`${N}×${N}`, dots.length, canvas.width, canvas.height);
-    textPositions2 = sampleTextPositions(`${dots.length}`, dots.length, canvas.width, canvas.height);
+    textPositions1 = sampleTextPositions(`${N}×${N}`, dots.length, canvasW, canvasH);
+    textPositions2 = sampleTextPositions(`${dots.length}`, dots.length, canvasW, canvasH);
   }
 
   let stage = 0;
@@ -819,7 +868,6 @@ function startDotDance(){
 
   function advanceStage(){
     stage = (stage + 1) % totalStages;
-    // Zero velocity on transition to prevent flinging
     dots.forEach(d => { d.vx = 0; d.vy = 0; });
     if(stage === 4){
       textPhase = 0;
@@ -829,13 +877,15 @@ function startDotDance(){
   }
   setTimeout(advanceStage, STAGE_DURATIONS[0]);
 
+  let animFrameId;
   let lastFrame = 0;
+
   function animate(timestamp){
-    requestAnimationFrame(animate);
+    animFrameId = requestAnimationFrame(animate);
     if(timestamp - lastFrame < 16.7) return;
     lastFrame = timestamp;
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvasW, canvasH);
     time += 0.01;
 
     const pulse = 4 + Math.sin(time * 1.5) * 1.5;
@@ -850,14 +900,14 @@ function startDotDance(){
         d.vy *= 0.998;
         if(Math.abs(d.vx) < 0.3) d.vx += (Math.random() - 0.5) * 0.5;
         if(Math.abs(d.vy) < 0.3) d.vy += (Math.random() - 0.5) * 0.5;
-        if(d.x < 0 || d.x > canvas.width)  d.vx *= -1;
-        if(d.y < 0 || d.y > canvas.height) d.vy *= -1;
+        if(d.x < 0 || d.x > canvasW) d.vx *= -1;
+        if(d.y < 0 || d.y > canvasH) d.vy *= -1;
       }
 
       else if(stage === 1){
         const col = i % N;
         const row = Math.floor(i / N);
-        const spacing = Math.min(canvas.width, canvas.height) / (N + 1);
+        const spacing = Math.min(canvasW, canvasH) / (N + 1);
         const totalRows = Math.ceil(dots.length / N);
         const targetX = centerX + (col - (N - 1) / 2) * spacing;
         const targetY = centerY + (row - (totalRows - 1) / 2) * spacing;
@@ -869,7 +919,7 @@ function startDotDance(){
 
       else if(stage === 2){
         const angle = (i / dots.length) * Math.PI * 2 + time * 0.3;
-        const radius = Math.min(canvas.width, canvas.height) * 0.3;
+        const radius = Math.min(canvasW, canvasH) * 0.3;
         const targetX = centerX + Math.cos(angle) * radius;
         const targetY = centerY + Math.sin(angle) * radius;
         d.x += (targetX - d.x) * 0.04;
@@ -919,12 +969,10 @@ function startDotDance(){
         d.vy = (targetY - d.y) * 0.02;
       }
 
-      // Batch by colour
       if(!byColor[d.color]) byColor[d.color] = [];
       byColor[d.color].push({ x: d.x, y: d.y });
     });
 
-    // One path per colour group
     for(const color in byColor){
       ctx.beginPath();
       ctx.fillStyle = color;
@@ -936,5 +984,11 @@ function startDotDance(){
     }
   }
 
-  requestAnimationFrame(animate);
+  // Pause when tab is hidden
+  document.addEventListener("visibilitychange", () => {
+    if(document.hidden) cancelAnimationFrame(animFrameId);
+    else animFrameId = requestAnimationFrame(animate);
+  });
+
+  animFrameId = requestAnimationFrame(animate);
 }
