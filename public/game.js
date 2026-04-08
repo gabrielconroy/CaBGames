@@ -214,14 +214,10 @@ function sortMerged(){
 }
 
 function renderBoard() {
-
   const boardDiv = document.getElementById("board");
-
-  // save scroll position
   const scrollX = boardDiv.scrollLeft;
   const scrollY = boardDiv.scrollTop;
-
-  boardDiv.innerHTML = ""; 
+  boardDiv.innerHTML = "";
   const table = document.createElement('table');
   table.id = "the_table";
 
@@ -234,30 +230,23 @@ function renderBoard() {
 
       const textForSizing = data.words.join(" ");
       btn.style.fontSize = mobileFontSize(textForSizing) + "px";
-      
-      // Highlight if selected
+
       if (selectedIdx && selectedIdx.r === rowIndex && selectedIdx.c === colIndex) {
-  if (selectionHeld) {
-    btn.classList.add("selected-held");
-  } else {
-    btn.classList.add("selected-tile");
-  }
-}
+        if (selectionHeld) {
+          btn.classList.add("selected-held");
+        } else {
+          btn.classList.add("selected-tile");
+        }
+      }
 
       if (data.words.length === 1) {
-        // Just one item
         btn.textContent = data.words[0];
       } else if (data.words.length < M) {
-
         let preview = data.words.slice(0,2).join(" • ");
         const suffix = data.words.length > 2 ? "…" : "";
         const count = data.words.length;
-
-        btn.innerHTML =
-          `<b>${preview}${suffix} <span style="color:${mergeColor(count)};font-weight:${count>20?'700':'600'}">[${count}]</span></b>`;
-
+        btn.innerHTML = `<b>${preview}${suffix} <span style="color:${mergeColor(count)};font-weight:${count>20?'700':'600'}">[${count}]</span></b>`;
       } else {
-        // Category complete
         btn.innerHTML = `<b>${data.category}</b>`;
         btn.disabled = true;
         btn.style.background = stringToLightColor(data.category);
@@ -265,135 +254,59 @@ function renderBoard() {
 
       btn.onclick = (e) => handleButtonClick(rowIndex, colIndex, e);
 
-      // Tooltip for merged tiles and long single tiles
-      const textContent = data.words.join(" • ");
-      const needsTooltip = data.words.length > 1 || textContent.length > 90;
-
-      function renderBoard() {
-
-  const boardDiv = document.getElementById("board");
-
-  // save scroll position
-  const scrollX = boardDiv.scrollLeft;
-  const scrollY = boardDiv.scrollTop;
-
-  boardDiv.innerHTML = ""; 
-  const table = document.createElement('table');
-  table.id = "the_table";
-
-  gameState.forEach((row, rowIndex) => {
-    const tr = document.createElement('tr');
-    row.forEach((data, colIndex) => {
-      const td = document.createElement('td');
-      const btn = document.createElement('button');
-      btn.className = "bigbut";
-
-      const textForSizing = data.words.join(" ");
-      btn.style.fontSize = mobileFontSize(textForSizing) + "px";
-      
-      // Highlight if selected
-      if (selectedIdx && selectedIdx.r === rowIndex && selectedIdx.c === colIndex) {
-  if (selectionHeld) {
-    btn.classList.add("selected-held");
-  } else {
-    btn.classList.add("selected-tile");
-  }
-}
-
-      if (data.words.length === 1) {
-        // Just one item
-        btn.textContent = data.words[0];
-      } else if (data.words.length < M) {
-
-        let preview = data.words.slice(0,2).join(" • ");
-        const suffix = data.words.length > 2 ? "…" : "";
-        const count = data.words.length;
-
-        btn.innerHTML =
-          `<b>${preview}${suffix} <span style="color:${mergeColor(count)};font-weight:${count>20?'700':'600'}">[${count}]</span></b>`;
-
-      } else {
-        // Category complete
-        btn.innerHTML = `<b>${data.category}</b>`;
-        btn.disabled = true;
-        btn.style.background = stringToLightColor(data.category);
-      }
-
-      btn.onclick = (e) => handleButtonClick(rowIndex, colIndex, e);
-
-      // Tooltip for merged tiles and long single tiles
       const textContent = data.words.join(" • ");
       const needsTooltip = data.words.length > 1 || textContent.length > 90;
 
       if (needsTooltip) {
-  if(window.innerWidth >= 768){
-    btn.addEventListener("mouseenter", e => {
-      showTooltip(textContent, e.clientX, e.clientY);
-    });
-    btn.addEventListener("mousemove", e => {
-      moveTooltip(e.clientX, e.clientY);
-    });
-    btn.addEventListener("mouseleave", hideTooltip);
-  } else {
-    let pressTimer = null;
-    let didLongPress = false;
+        if(window.innerWidth >= 768){
+          btn.addEventListener("mouseenter", e => {
+            showTooltip(textContent, e.clientX, e.clientY);
+          });
+          btn.addEventListener("mousemove", e => {
+            moveTooltip(e.clientX, e.clientY);
+          });
+          btn.addEventListener("mouseleave", hideTooltip);
+        } else {
+          let pressTimer = null;
+          let didLongPress = false;
 
-    btn.addEventListener("touchstart", e => {
-      didLongPress = false;
-      pressTimer = setTimeout(() => {
-        didLongPress = true;
-        showTooltip(textContent, e.touches[0].clientX, e.touches[0].clientY);
-      }, 600);
-    }, { passive: true });
+          btn.addEventListener("touchstart", e => {
+            didLongPress = false;
+            pressTimer = setTimeout(() => {
+              didLongPress = true;
+              showTooltip(textContent, e.touches[0].clientX, e.touches[0].clientY);
+            }, 600);
+          }, { passive: true });
 
-    btn.addEventListener("touchend", e => {
-      clearTimeout(pressTimer);
-      if(didLongPress){
-        e.preventDefault();
-        e.stopPropagation();
-        hideTooltip();
+          btn.addEventListener("touchend", e => {
+            clearTimeout(pressTimer);
+            if(didLongPress){
+              e.preventDefault();
+              e.stopPropagation();
+              hideTooltip();
+            }
+          });
+
+          btn.addEventListener("touchmove", () => {
+            clearTimeout(pressTimer);
+            hideTooltip();
+          });
+        }
       }
-    });
 
-    btn.addEventListener("touchmove", () => {
-      clearTimeout(pressTimer);
-      hideTooltip();
+      td.appendChild(btn);
+      tr.appendChild(td);
     });
+    table.appendChild(tr);
+  });
+
+  boardDiv.appendChild(table);
+  boardDiv.scrollLeft = scrollX;
+  boardDiv.scrollTop = scrollY;
+
+  if (window.innerWidth > 600) {
+    fitButtonText();
   }
-}
-
-      td.appendChild(btn);
-      tr.appendChild(td);
-    });
-    table.appendChild(tr);
-  });
-
-  boardDiv.appendChild(table);
-
-  // restore scroll position
-  boardDiv.scrollLeft = scrollX;
-  boardDiv.scrollTop = scrollY;
-
-  if (window.innerWidth > 600) {
-  fitButtonText();
-}
-}
-
-      td.appendChild(btn);
-      tr.appendChild(td);
-    });
-    table.appendChild(tr);
-  });
-
-  boardDiv.appendChild(table);
-
-  // restore scroll position
-  boardDiv.scrollLeft = scrollX;
-  boardDiv.scrollTop = scrollY;
-
-  if (window.innerWidth > 600) {
-  fitButtonText();
-}
 }
 
 
