@@ -14,17 +14,17 @@
   <div id="crt-overlay"></div>
 
   <header>
-  <div class="game-stats">
-    <div class="stats-group">
-      <span class="stat-item">⭐ <strong><span id="score">0</span></strong></span>
-      <span class="stat-divider">|</span>
-      <span class="stat-item">❌ <strong><span id="mistakes">0</span></strong></span>
-    </div>
+  <div class="stats-group">
+  <span class="stat-item">HITS <strong><span id="score">0</span></strong></span>
+  <span class="stat-divider">|</span>
+  <span class="stat-item">MISSES <strong><span id="mistakes">0</span></strong></span>
+</div>
     <div class="centre-group">
-      <button id="deselect" type="button" onclick="deselect()" disabled>Deselect</button>
-      <div class="selected-display">Selected: <span id="selected">-</span></div>
-      <button type="button" onclick="sortMerged()">Sort Merged</button>
-    </div>
+  <button id="deselect" type="button" onclick="deselect()" disabled>Deselect</button>
+  <div class="selected-display">Selected: <span id="selected">-</span></div>
+  <button type="button" onclick="sortMerged()">Sort Merged</button>
+  <button type="button" onclick="shuffleUnmerged()">Shuffle</button>
+</div>
     <div class="header-buttons">
       <button type="button" onclick="goHome()">Home</button>
       <button id="reset-btn" type="button" onclick="confirmReset()">Reset</button>

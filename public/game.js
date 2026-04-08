@@ -147,6 +147,37 @@ function mergeColor(n){
   return `hsl(0, ${saturation}%, ${lightness}%)`;
 }
 
+function shuffleUnmerged(){
+  deselect();
+
+  // Separate merged and unmerged
+  const flat = gameState.flat();
+  const merged = flat.filter(t => t.words.length > 1);
+  const unmerged = flat.filter(t => t.words.length === 1);
+
+  // Shuffle all tiles together first
+  const all = [...merged, ...unmerged];
+  shuffleArray(all);
+
+  // Then sort merged to top
+  all.sort((a, b) => {
+    const aMerged = a.words.length > 1;
+    const bMerged = b.words.length > 1;
+    if(aMerged !== bMerged) return bMerged - aMerged;
+    return b.words.length - a.words.length;
+  });
+
+  // Rebuild gameState
+  gameState = [];
+  const copy = [...all];
+  while(copy.length){
+    gameState.push(copy.splice(0, COLS));
+  }
+
+  renderBoard();
+  saveState();
+}
+
 function goHome() {
   window.location.href = "/";
 }
