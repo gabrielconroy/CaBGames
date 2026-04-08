@@ -114,14 +114,14 @@ function mobileFontSize(text){
 }
 
 function showTooltip(text, x, y){
-
   const tip = document.getElementById("tile-tooltip");
-
-  tip.textContent = text;
-
+  const isMobile = window.innerWidth < 768;
+  const displayText = isMobile && text.length > 75
+    ? text.slice(0, 57) + "..."
+    : text;
+  tip.textContent = displayText;
   tip.style.left = (x + 12) + "px";
   tip.style.top  = (y + 12) + "px";
-
   tip.classList.add("visible");
 }
 
