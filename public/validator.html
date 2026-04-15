@@ -68,19 +68,35 @@
     margin-left: 10px;
     color: #ccc;
   }
+  
+  .tag-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #2a2a2a;
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 3px 8px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.tag-checkbox input {
+  width: auto;
+  margin: 0;
+}
+label {
+  display: block;
+  margin-top: 8px;
+}
 </style>
 </head>
 <body>
-
 <h2>🧩 Category Import Tool</h2>
-
 <p>Paste your raw list below in plain text. If you specify the category size, category titles should be auto-detected.</p>
-
 <div class="container">
-
   <div class="left">
     <textarea id="pasteBox" placeholder="USE THIS FORMAT:
-	
+
 1. First Category
 item1
 item2
@@ -92,15 +108,50 @@ item4"></textarea>
       Items per category:
       <input id="catSize" type="number" min="1" placeholder="e.g. 25">
     </label>
-	
-	<label>
-	  Author:
-	  <input id="author" type="text" placeholder="Optional name">
-	</label>
+
+    <label>
+      Author:
+      <input id="author" type="text" placeholder="Optional name">
+    </label>
+
+    <label>
+      Notes: <span style="color:#aaa;font-size:12px">(optional — shown to players on demand)</span>
+      <textarea id="notes" style="min-height:60px;margin-top:4px;width:100%;background:#222;color:#eee;border:1px solid #444;padding:8px;font-family:sans-serif;resize:vertical" placeholder="Add setter notes, trivia, explanations..."></textarea>
+    </label>
+
+    <label>
+      Difficulty:
+      <select id="tag-difficulty" style="background:#222;color:#eee;border:1px solid #444;padding:4px 8px;border-radius:4px;margin-left:6px">
+        <option value="">— none —</option>
+        <option value="Easy">Easy</option>
+        <option value="Medium">Medium</option>
+        <option value="Hard">Hard</option>
+        <option value="Expert">Expert</option>
+      </select>
+    </label>
+
+    <label>
+      Themes: <span style="color:#aaa;font-size:12px">(select all that apply)</span>
+      <div id="tag-themes" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
+        <label class="tag-checkbox"><input type="checkbox" value="Pop culture"> Pop culture</label>
+        <label class="tag-checkbox"><input type="checkbox" value="History"> History</label>
+        <label class="tag-checkbox"><input type="checkbox" value="Science"> Science</label>
+        <label class="tag-checkbox"><input type="checkbox" value="Sport"> Sport</label>
+        <label class="tag-checkbox"><input type="checkbox" value="Music"> Music</label>
+        <label class="tag-checkbox"><input type="checkbox" value="Film & TV"> Film & TV</label>
+        <label class="tag-checkbox"><input type="checkbox" value="Gaming"> Gaming</label>
+        <label class="tag-checkbox"><input type="checkbox" value="Literature"> Literature</label>
+        <label class="tag-checkbox"><input type="checkbox" value="Food & Drink"> Food & Drink</label>
+        <label class="tag-checkbox"><input type="checkbox" value="Geography"> Geography</label>
+        <label class="tag-checkbox"><input type="checkbox" value="Language"> Language</label>
+        <label class="tag-checkbox"><input type="checkbox" value="Art"> Art</label>
+        <label class="tag-checkbox"><input type="checkbox" value="Wordplay"> Wordplay</label>
+      </div>
+    </label>
 
     <div>
       <button onclick="runImport()">Validate</button>
-	  <button onclick="uploadPuzzle()">Upload</button>
+      <button onclick="uploadPuzzle()">Upload</button>
       <button onclick="download()">Download JS</button>
       <button onclick="downloadAnyway()">Download Anyway</button>
     </div>
@@ -109,11 +160,7 @@ item4"></textarea>
   <div class="right" id="preview">
     <b>Category preview will appear here</b>
   </div>
-
 </div>
-
-<div id="output"></div>
-
 
 <div id="output"></div>
 

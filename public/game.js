@@ -310,6 +310,12 @@ function renderBoard() {
   }
 }
 
+function toggleNotes(){
+  const overlay = document.getElementById("notes-overlay");
+  const isVisible = overlay.style.display === "flex";
+  overlay.style.display = isVisible ? "none" : "flex";
+}
+
 
 function handleButtonClick(r, c, e) {
   // 1. If it's the first click

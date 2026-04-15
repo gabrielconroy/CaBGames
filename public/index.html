@@ -172,6 +172,21 @@
       font-style: italic;
       margin-top: 10px;
     }
+	
+	.card-tags{
+  display:flex;
+  flex-wrap:wrap;
+  gap:4px;
+  margin-top:4px;
+}
+.tag{
+  background:#f0f4ff;
+  border:1px solid #c7d4f5;
+  border-radius:4px;
+  padding:2px 7px;
+  font-size:11px;
+  color:#2563eb;
+}
   </style>
 </head>
 <body>
@@ -211,17 +226,32 @@
           ? new Date(p.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
           : "";
 
-        const card = document.createElement("div");
-        card.className = "card";
-        card.onclick = () => play(p.id);
+        const tags = JSON.parse(p.tags || '[]');
+const tagHtml = tags.length
+  ? `<div class="card-tags">${tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>`
+  : '';
 
-        card.innerHTML = `
-          <div class="card-title">${escapeHtml(p.name)}</div>
-          <div class="card-author">by ${author}</div>
-          <div class="card-meta">
-            <span>🔲 ${escapeHtml(size)}</span>
-            ${date ? `<span>📅 ${date}</span>` : ""}
-          </div>
+const card = document.createElement("div");
+card.className = "card";
+card.onclick = () => play(p.id);
+card.innerHTML = `
+  <div class="card-title">${escapeHtml(p.name)}</div>
+  <div class="card-author">by ${author}</div>
+  <div class="card-meta">
+    <span>🔲 ${escapeHtml(size)}</span>
+    ${date ? `<span>📅 ${date}</span>` : ""}
+  </div>
+  ${tagHtml}
+  <div class="card-footer">
+    <div>
+      <div class="stars" onclick="event.stopPropagation()" data-id="${p.id}">
+        ${renderStars(rating, p.id)}
+      </div>
+      <div class="vote-count">${votes} vote${votes === 1 ? "" : "s"}</div>
+    </div>
+    <div class="play-hint">▶ Play</div>
+  </div>
+`;
           <div class="card-footer">
             <div>
               <div class="stars" onclick="event.stopPropagation()" data-id="${p.id}">
