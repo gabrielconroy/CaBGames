@@ -24,6 +24,7 @@ async function loadPuzzle() {
 }
 
 M = firstCategory.length;
+N = Object.keys(cats).length;
 
     loadState();
 
@@ -309,6 +310,12 @@ function renderBoard() {
   }
 }
 
+function toggleNotes(){
+  const overlay = document.getElementById("notes-overlay");
+  const isVisible = overlay.style.display === "flex";
+  overlay.style.display = isVisible ? "none" : "flex";
+}
+
 
 function handleButtonClick(r, c, e) {
   // 1. If it's the first click
@@ -356,7 +363,7 @@ function handleButtonClick(r, c, e) {
     }
 
     const mergedSize = gameState[targetR][targetC].words.length;
-if (!selectionHeld || mergedSize === M) {
+  if (!selectionHeld || mergedSize === M) {
   deselect();
 } else {
   selectedIdx = { r: targetR, c: targetC };
@@ -379,8 +386,10 @@ if (!selectionHeld || mergedSize === M) {
         setTimeout(() => targetBtn.classList.remove("success-glow"), 600);
       }
     }
+	
+	console.log("score:", score, "win target:", N * (M - 1), "N:", N, "M:", M);
 
-    if (score === M * (M - 1)) {
+    if (score === N * (M - 1)) {
       triggerWinState();
     }
 
@@ -808,7 +817,6 @@ function startDotDance(){
   const centerX = canvasW / 2;
   const centerY = canvasH / 2;
 
-  const N = Object.keys(cats).length;
   const lissRadius = Math.min(canvasW, canvasH) * 0.35;
   const dots = [];
 
@@ -856,7 +864,7 @@ function startDotDance(){
   let textPositions1 = [];
   let textPositions2 = [];
   if(useTextStage){
-    textPositions1 = sampleTextPositions(`${N}×${N}`, dots.length, canvasW, canvasH);
+    textPositions1 = sampleTextPositions(`${N}×${M}`, dots.length, canvasW, canvasH);
     textPositions2 = sampleTextPositions(`${dots.length}`, dots.length, canvasW, canvasH);
   }
 

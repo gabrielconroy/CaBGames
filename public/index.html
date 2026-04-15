@@ -172,6 +172,21 @@
       font-style: italic;
       margin-top: 10px;
     }
+	
+	.card-tags{
+  display:flex;
+  flex-wrap:wrap;
+  gap:4px;
+  margin-top:4px;
+}
+.tag{
+  background:#f0f4ff;
+  border:1px solid #c7d4f5;
+  border-radius:4px;
+  padding:2px 7px;
+  font-size:11px;
+  color:#2563eb;
+}
   </style>
 </head>
 <body>
@@ -187,91 +202,96 @@
   <h2>Browse</h2>
   <div id="list"></div>
 
-  <script>
-    async function load() {
-      const res = await fetch("/api/puzzles");
-      const puzzles = await res.json();
-      const list = document.getElementById("list");
-      list.innerHTML = "";
+<script>
+  async function load() {
+    const res = await fetch("/api/puzzles");
+    const puzzles = await res.json();
+    const list = document.getElementById("list");
+    list.innerHTML = "";
 
-      if (!puzzles.length) {
-        list.innerHTML = `<div class="empty">No puzzles uploaded yet.</div>`;
-        return;
-      }
+    if (!puzzles.length) {
+      list.innerHTML = `<div class="empty">No puzzles uploaded yet.</div>`;
+      return;
+    }
 
-      const grid = document.createElement("div");
-      grid.className = "puzzle-grid";
+    const grid = document.createElement("div");
+    grid.className = "puzzle-grid";
 
-      puzzles.forEach(p => {
-        const rating = Number(p.rating || 0);
-        const votes = Number(p.votes || 0);
-        const size = p.size || "?x?";
-        const author = escapeHtml(p.author || "Anonymous");
-        const date = p.created_at
-          ? new Date(p.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
-          : "";
+    puzzles.forEach(p => {
+      const rating = Number(p.rating || 0);
+      const votes = Number(p.votes || 0);
+      const size = p.size || "?x?";
+      const author = escapeHtml(p.author || "Anonymous");
+      const date = p.created_at
+        ? new Date(p.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+        : "";
 
-        const card = document.createElement("div");
-        card.className = "card";
-        card.onclick = () => play(p.id);
+      const tags = (() => { try { return JSON.parse(p.tags || '[]') || []; } catch(e) { return []; } })();
+      const tagHtml = tags.length
+        ? `<div class="card-tags">${tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>`
+        : '';
 
-        card.innerHTML = `
-          <div class="card-title">${escapeHtml(p.name)}</div>
-          <div class="card-author">by ${author}</div>
-          <div class="card-meta">
-            <span>🔲 ${escapeHtml(size)}</span>
-            ${date ? `<span>📅 ${date}</span>` : ""}
-          </div>
-          <div class="card-footer">
-            <div>
-              <div class="stars" onclick="event.stopPropagation()" data-id="${p.id}">
-                ${renderStars(rating, p.id)}
-              </div>
-              <div class="vote-count">${votes} vote${votes === 1 ? "" : "s"}</div>
+      const card = document.createElement("div");
+      card.className = "card";
+      card.onclick = () => play(p.id);
+      card.innerHTML = `
+        <div class="card-title">${escapeHtml(p.name)}</div>
+        <div class="card-author">by ${author}</div>
+        <div class="card-meta">
+          <span>🔲 ${escapeHtml(size)}</span>
+          ${date ? `<span>📅 ${date}</span>` : ""}
+        </div>
+        ${tagHtml}
+        <div class="card-footer">
+          <div>
+            <div class="stars" onclick="event.stopPropagation()" data-id="${p.id}">
+              ${renderStars(rating, p.id)}
             </div>
-            <div class="play-hint">▶ Play</div>
+            <div class="vote-count">${votes} vote${votes === 1 ? "" : "s"}</div>
           </div>
-        `;
+          <div class="play-hint">▶ Play</div>
+        </div>
+      `;
 
-        grid.appendChild(card);
-      });
+      grid.appendChild(card);
+    });
 
-      list.appendChild(grid);
+    list.appendChild(grid);
+  }
+
+  function renderStars(rating, id) {
+    const rounded = Math.round(rating);
+    let html = "";
+    for (let i = 1; i <= 5; i++) {
+      const filled = i <= rounded ? "★" : "☆";
+      html += `<span onclick="rate(${id}, ${i})" title="Rate ${i}">${filled}</span>`;
     }
+    return html;
+  }
 
-    function renderStars(rating, id) {
-      const rounded = Math.round(rating);
-      let html = "";
-      for (let i = 1; i <= 5; i++) {
-        const filled = i <= rounded ? "★" : "☆";
-        html += `<span onclick="rate(${id}, ${i})" title="Rate ${i}">${filled}</span>`;
-      }
-      return html;
-    }
+  async function play(id) {
+    window.location.href = "/game?id=" + encodeURIComponent(id);
+  }
 
-    async function play(id) {
-      window.location.href = "/game?id=" + encodeURIComponent(id);
-    }
-
-    async function rate(id, value) {
-      await fetch("/api/rate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, rating: value })
-      });
-      load();
-    }
-
-    function escapeHtml(str) {
-      return String(str)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#39;");
-    }
-
+  async function rate(id, value) {
+    await fetch("/api/rate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, rating: value })
+    });
     load();
-  </script>
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
+  }
+
+  load();
+</script>
 </body>
 </html>
