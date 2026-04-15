@@ -380,6 +380,8 @@ function handleButtonClick(r, c, e) {
         setTimeout(() => targetBtn.classList.remove("success-glow"), 600);
       }
     }
+	
+	console.log("score:", score, "win target:", N * (M - 1), "N:", N, "M:", M);
 
     if (score === N * (M - 1)) {
       triggerWinState();
