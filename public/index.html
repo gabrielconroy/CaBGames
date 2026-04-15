@@ -226,7 +226,7 @@
           ? new Date(p.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
           : "";
 
-        const tags = JSON.parse(p.tags || '[]');
+        const tags = (() => { try { return JSON.parse(p.tags || '[]') || []; } catch(e) { return []; } })();
 const tagHtml = tags.length
   ? `<div class="card-tags">${tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>`
   : '';
