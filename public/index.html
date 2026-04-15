@@ -218,18 +218,43 @@
       grid.className = "puzzle-grid";
 
       puzzles.forEach(p => {
-        const rating = Number(p.rating || 0);
-        const votes = Number(p.votes || 0);
-        const size = p.size || "?x?";
-        const author = escapeHtml(p.author || "Anonymous");
-        const date = p.created_at
-          ? new Date(p.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
-          : "";
+  const rating = Number(p.rating || 0);
+  const votes = Number(p.votes || 0);
+  const size = p.size || "?x?";
+  const author = escapeHtml(p.author || "Anonymous");
+  const date = p.created_at
+    ? new Date(p.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+    : "";
 
-        const tags = (() => { try { return JSON.parse(p.tags || '[]') || []; } catch(e) { return []; } })();
-const tagHtml = tags.length
-  ? `<div class="card-tags">${tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>`
-  : '';
+  const tags = (() => { try { return JSON.parse(p.tags || '[]') || []; } catch(e) { return []; } })();
+  const tagHtml = tags.length
+    ? `<div class="card-tags">${tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>`
+    : '';
+
+  const card = document.createElement("div");
+  card.className = "card";
+  card.onclick = () => play(p.id);
+  card.innerHTML = `
+    <div class="card-title">${escapeHtml(p.name)}</div>
+    <div class="card-author">by ${author}</div>
+    <div class="card-meta">
+      <span>🔲 ${escapeHtml(size)}</span>
+      ${date ? `<span>📅 ${date}</span>` : ""}
+    </div>
+    ${tagHtml}
+    <div class="card-footer">
+      <div>
+        <div class="stars" onclick="event.stopPropagation()" data-id="${p.id}">
+          ${renderStars(rating, p.id)}
+        </div>
+        <div class="vote-count">${votes} vote${votes === 1 ? "" : "s"}</div>
+      </div>
+      <div class="play-hint">▶ Play</div>
+    </div>
+  `;
+
+  grid.appendChild(card);
+});
 
 const card = document.createElement("div");
 card.className = "card";
