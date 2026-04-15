@@ -24,6 +24,7 @@ async function loadPuzzle() {
 }
 
 M = firstCategory.length;
+N = Object.keys(cats).length;
 
     loadState();
 
@@ -356,7 +357,7 @@ function handleButtonClick(r, c, e) {
     }
 
     const mergedSize = gameState[targetR][targetC].words.length;
-if (!selectionHeld || mergedSize === M) {
+  if (!selectionHeld || mergedSize === M) {
   deselect();
 } else {
   selectedIdx = { r: targetR, c: targetC };
@@ -380,7 +381,7 @@ if (!selectionHeld || mergedSize === M) {
       }
     }
 
-    if (score === M * (M - 1)) {
+    if (score === N * (M - 1)) {
       triggerWinState();
     }
 
@@ -808,7 +809,6 @@ function startDotDance(){
   const centerX = canvasW / 2;
   const centerY = canvasH / 2;
 
-  const N = Object.keys(cats).length;
   const lissRadius = Math.min(canvasW, canvasH) * 0.35;
   const dots = [];
 
@@ -856,7 +856,7 @@ function startDotDance(){
   let textPositions1 = [];
   let textPositions2 = [];
   if(useTextStage){
-    textPositions1 = sampleTextPositions(`${N}×${N}`, dots.length, canvasW, canvasH);
+    textPositions1 = sampleTextPositions(`${N}×${M}`, dots.length, canvasW, canvasH);
     textPositions2 = sampleTextPositions(`${dots.length}`, dots.length, canvasW, canvasH);
   }
 
