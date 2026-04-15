@@ -277,17 +277,7 @@ card.innerHTML = `
     <div class="play-hint">▶ Play</div>
   </div>
 `;
-          <div class="card-footer">
-            <div>
-              <div class="stars" onclick="event.stopPropagation()" data-id="${p.id}">
-                ${renderStars(rating, p.id)}
-              </div>
-              <div class="vote-count">${votes} vote${votes === 1 ? "" : "s"}</div>
-            </div>
-            <div class="play-hint">▶ Play</div>
-          </div>
-        `;
-
+          
         grid.appendChild(card);
       });
 
